@@ -249,6 +249,7 @@ services:
       - app_secret_key
       - jwt_secret_key
       - data_encryption_key
+      - cloudpaypag_webhook_secret
     depends_on:
       db-init:
         condition: service_completed_successfully
@@ -277,6 +278,7 @@ services:
       - app_secret_key
       - jwt_secret_key
       - data_encryption_key
+      - cloudpaypag_webhook_secret
       - bootstrap_master_password
     depends_on:
       postgres:
