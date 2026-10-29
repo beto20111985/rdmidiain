@@ -1,0 +1,10 @@
+# Contexto da imagem de produção do nginx: só nginx.conf, snippets/ e prod/templates/
+conf.d/
+ssl/
+**/*.pem
+**/*.key
+**/*.crt
+.env
+.env.*
+secrets/
+*.log

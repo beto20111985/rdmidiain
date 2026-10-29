@@ -1,0 +1,4174 @@
+{
+  "version": 1,
+  "generated_by": "backend/app/modules/playback/vectors.py (RDPP/1 — implementação de referência)",
+  "cases": [
+    {
+      "name": "2+2_basico",
+      "manifest": {
+        "schema": "rd.manifest/1",
+        "manifest_id": "8f49e140-90c3-5d42-86da-290db7766943",
+        "version": 42,
+        "screen_id": "a2fd3775-306c-58d1-951a-5ae23a24ac6d",
+        "screen_code": "TEL-GO-7Q3M",
+        "generated_at_ms": 1791799200000,
+        "timezone": "America/Sao_Paulo",
+        "rotation": {
+          "internal_ms": 120000,
+          "external_ms": 120000,
+          "cycle_ms": 240000,
+          "unit_ms": 30000,
+          "policy_id": "83e5e6e2-0267-5928-b92a-fa525d51e384"
+        },
+        "anchor_ms": 1791802800000,
+        "horizon": {
+          "from_ms": 1791716400000,
+          "to_ms": 1792321200000,
+          "repeat_period_ms": 604800000
+        },
+        "settings": {
+          "image_default_ms": 30000,
+          "fade_ms": 400,
+          "orientation": "LANDSCAPE",
+          "footer": {
+            "enabled": true,
+            "height_permille": 60
+          },
+          "offline_alert_days": [
+            7,
+            28
+          ],
+          "heartbeat_interval_ms": 30000,
+          "telemetry_interval_ms": 300000,
+          "panel_url": "https://painel.exemplo.test"
+        },
+        "media": {
+          "m1": {
+            "media_id": "1cef28a3-4137-5443-a891-f45adfc76a6d",
+            "sha256": "472bec8bbe29a574a4d5794d1c8cb21fc4b819d3b189734ffcb62fc00035a384",
+            "size": 1000001,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m2": {
+            "media_id": "940ef36f-929d-5a6a-b962-578102819d51",
+            "sha256": "53314b32180d9400067915303537e91b40f13f8a0c4fc6f81c0bca8547fa969c",
+            "size": 1000002,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m3": {
+            "media_id": "ba09b9dd-8e2b-5a8b-9914-facc5107a45d",
+            "sha256": "04f06a5c0367b40817539972cd0d96ba392c486e36207857938319cc2c284724",
+            "size": 1000003,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m4": {
+            "media_id": "da439163-df79-59c5-8894-9cd0a71eeed6",
+            "sha256": "4921e501ce77ce2ca4269a40747629db102c8eb851ae3be10cf4ec48c07bc798",
+            "size": 1000004,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m5": {
+            "media_id": "9efc2b39-244a-5ed2-bf05-103c59a1505b",
+            "sha256": "0b9f41ed8ec3455ac94ee7f26b5854bf48a85b0286b1778d46222af3172e1ea9",
+            "size": 1000005,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m6": {
+            "media_id": "5eafb9a9-629a-59d6-b4d3-d00b03224119",
+            "sha256": "685885460b8873fb5ebfcef65de9b0aef41f68355d73a1148c499ecd11403277",
+            "size": 1000006,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m7": {
+            "media_id": "760a609e-79ce-5072-b54b-4a0b58ec2ca6",
+            "sha256": "23c87fc766bca4bcb22c0a55e4037736423c0ee60c0e175c6a04306f9169c61d",
+            "size": 1000007,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": null
+          },
+          "m8": {
+            "media_id": "b5dac854-c524-50fc-bc71-18fb78b14040",
+            "sha256": "a607b7689ec517a496d0e14b1275d3ec0c492d3ddb8f4547d7f71c42282a0468",
+            "size": 1000008,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m9": {
+            "media_id": "d5e51605-f7de-5c3e-8a0f-41e460b1964b",
+            "sha256": "20347c6a6a03dfecdcb0b4b6202d706e8566fa5ea8456ce9b3c2f2f2f02481a8",
+            "size": 1000009,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          }
+        },
+        "creatives": {
+          "c1": {
+            "creative_id": "49fd9ed8-3e41-5cff-8784-70f7f5648d87",
+            "code": "RD-A7M2P9",
+            "kind": "EXTERNAL",
+            "campaign_id": "4007d10d-00df-51cf-96ac-27bcd84c9662",
+            "advertiser_id": "eace7257-21ad-5529-89ac-3cdb14aacbf4",
+            "media": "m1",
+            "duration_ms": 120000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c2": {
+            "creative_id": "cd260b91-d941-55cb-999a-3e4e2760e984",
+            "code": "RD-B3C4D5",
+            "kind": "EXTERNAL",
+            "campaign_id": "1781708b-5e0a-597c-8bc9-3d5b4f96e508",
+            "advertiser_id": "fc008390-3cb7-5679-b7e9-6fd23a80c259",
+            "media": "m2",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c3": {
+            "creative_id": "6b376c82-0a45-541c-a226-d4cd76543fdb",
+            "code": "RD-E6F7G8",
+            "kind": "EXTERNAL",
+            "campaign_id": "54dcf3fe-02ce-5f94-a24c-1b1ff190713d",
+            "advertiser_id": "619232fc-bd26-5140-9196-7d4acdeff81d",
+            "media": "m3",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c4": {
+            "creative_id": "80a6edac-6968-5472-bad3-c7fc7f08de21",
+            "code": "RD-H9J2M3",
+            "kind": "EXTERNAL",
+            "campaign_id": "0806561e-70ae-5f28-a0e8-e353a4059a49",
+            "advertiser_id": "48bf49fa-5106-5b28-8464-041468f15584",
+            "media": "m4",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c5": {
+            "creative_id": "94a3d9e1-573b-5921-bf1d-d4dcee3ad46b",
+            "code": "RD-N4P5Q6",
+            "kind": "EXTERNAL",
+            "campaign_id": "78c5a9f5-9027-5f80-8c3a-2159fb3e08e9",
+            "advertiser_id": "8b7cfec8-0f65-5340-8f19-864a472780cf",
+            "media": "m5",
+            "duration_ms": 30000,
+            "valid_from_ms": 1791802800000,
+            "valid_until_ms": 1791803280000,
+            "label": "Publicidade"
+          },
+          "c6": {
+            "creative_id": "1a0104c8-65ce-5622-8717-a2b4789e5bcf",
+            "code": "RD-U2V3Y4",
+            "kind": "INSTITUTIONAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m6",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c7": {
+            "creative_id": "0e193bb4-b8ac-554c-bea2-9f40d4b4d6f9",
+            "code": "RD-R7S8T9",
+            "kind": "INTERNAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m7",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Conteúdo do estabelecimento"
+          },
+          "c8": {
+            "creative_id": "26c29682-710d-5a47-b805-76e4790ac53c",
+            "code": "RD-Z5A6B7",
+            "kind": "INTERNAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m8",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Conteúdo do estabelecimento"
+          },
+          "f1": {
+            "creative_id": "4a412bca-e735-5c60-9c06-4254fdddfb3a",
+            "code": "RD-F2A3B4",
+            "kind": "FALLBACK",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m9",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "RD Mídia Indoor"
+          },
+          "f2": {
+            "creative_id": "1701fa34-df19-5af7-8306-f8482c9a8ddb",
+            "code": "RD-G5H6J7",
+            "kind": "FALLBACK",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m9",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "RD Mídia Indoor"
+          }
+        },
+        "internal_pattern": [
+          [
+            {
+              "c": "c7",
+              "d": 60000
+            },
+            {
+              "c": "c8",
+              "d": 60000
+            }
+          ],
+          [
+            {
+              "c": "c8",
+              "d": 60000
+            },
+            {
+              "c": "c7",
+              "d": 60000
+            }
+          ]
+        ],
+        "fallback": [
+          {
+            "c": "f1",
+            "d": 30000
+          },
+          {
+            "c": "f2",
+            "d": 60000
+          }
+        ],
+        "external_plan": {
+          "1791802800000": [
+            {
+              "i": "91af9dbb-dc14-5b5b-a549-908c6e06488e",
+              "c": "c1",
+              "u": 0,
+              "d": 120000
+            }
+          ],
+          "1791803040000": [
+            {
+              "i": "324d81c5-3dd6-5737-8e7b-b4386dc400e9",
+              "c": "c2",
+              "u": 0,
+              "d": 60000
+            },
+            {
+              "i": "cab09231-d489-5958-bf46-fee1ebbf536c",
+              "c": "c4",
+              "u": 2,
+              "d": 60000
+            }
+          ],
+          "1791803280000": [
+            {
+              "i": "16bd913b-802d-5a94-8062-7798ba0ebbe2",
+              "c": "c3",
+              "u": 1,
+              "d": 30000
+            }
+          ]
+        },
+        "emergency": [],
+        "revoked": []
+      },
+      "anchor_ms": 1791802800000,
+      "local_state": {
+        "revoked": [],
+        "media_ready": [
+          "m1",
+          "m2",
+          "m3",
+          "m4",
+          "m5",
+          "m6",
+          "m7",
+          "m8",
+          "m9"
+        ]
+      },
+      "queries": [
+        {
+          "t_ms": 1791802800000,
+          "expected": {
+            "block": "INTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c7",
+            "start_ms": 1791802800000,
+            "end_ms": 1791802860000
+          }
+        },
+        {
+          "t_ms": 1791802859999,
+          "expected": {
+            "block": "INTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c7",
+            "start_ms": 1791802800000,
+            "end_ms": 1791802860000
+          }
+        },
+        {
+          "t_ms": 1791802860000,
+          "expected": {
+            "block": "INTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c8",
+            "start_ms": 1791802860000,
+            "end_ms": 1791802920000
+          }
+        },
+        {
+          "t_ms": 1791802919999,
+          "expected": {
+            "block": "INTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c8",
+            "start_ms": 1791802860000,
+            "end_ms": 1791802920000
+          }
+        },
+        {
+          "t_ms": 1791802920000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c1",
+            "start_ms": 1791802920000,
+            "end_ms": 1791803040000
+          }
+        },
+        {
+          "t_ms": 1791803039999,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c1",
+            "start_ms": 1791802920000,
+            "end_ms": 1791803040000
+          }
+        },
+        {
+          "t_ms": 1791803040000,
+          "expected": {
+            "block": "INTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c8",
+            "start_ms": 1791803040000,
+            "end_ms": 1791803100000
+          }
+        },
+        {
+          "t_ms": 1791803100000,
+          "expected": {
+            "block": "INTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c7",
+            "start_ms": 1791803100000,
+            "end_ms": 1791803160000
+          }
+        },
+        {
+          "t_ms": 1791803160000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c2",
+            "start_ms": 1791803160000,
+            "end_ms": 1791803220000
+          }
+        },
+        {
+          "t_ms": 1791803220000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c4",
+            "start_ms": 1791803220000,
+            "end_ms": 1791803280000
+          }
+        },
+        {
+          "t_ms": 1791803279999,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c4",
+            "start_ms": 1791803220000,
+            "end_ms": 1791803280000
+          }
+        },
+        {
+          "t_ms": 1791803400000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "f1",
+            "start_ms": 1791803400000,
+            "end_ms": 1791803430000
+          }
+        },
+        {
+          "t_ms": 1791803430000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c3",
+            "start_ms": 1791803430000,
+            "end_ms": 1791803460000
+          }
+        },
+        {
+          "t_ms": 1791803460000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "f1",
+            "start_ms": 1791803460000,
+            "end_ms": 1791803490000
+          }
+        },
+        {
+          "t_ms": 1791803490000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "FILLER",
+            "creative_key": "f2",
+            "start_ms": 1791803490000,
+            "end_ms": 1791803520000
+          }
+        },
+        {
+          "t_ms": 1791803640000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "f1",
+            "start_ms": 1791803640000,
+            "end_ms": 1791803670000
+          }
+        },
+        {
+          "t_ms": 1791803670000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "f2",
+            "start_ms": 1791803670000,
+            "end_ms": 1791803730000
+          }
+        },
+        {
+          "t_ms": 1791803730000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "f1",
+            "start_ms": 1791803730000,
+            "end_ms": 1791803760000
+          }
+        }
+      ],
+      "note": "interno alterna padrões por ciclo (k mod 2); 120 s ocupa o bloco externo; lacunas → fallback"
+    },
+    {
+      "name": "3+1",
+      "manifest": {
+        "schema": "rd.manifest/1",
+        "manifest_id": "8f49e140-90c3-5d42-86da-290db7766943",
+        "version": 42,
+        "screen_id": "a2fd3775-306c-58d1-951a-5ae23a24ac6d",
+        "screen_code": "TEL-GO-7Q3M",
+        "generated_at_ms": 1791799200000,
+        "timezone": "America/Sao_Paulo",
+        "rotation": {
+          "internal_ms": 180000,
+          "external_ms": 60000,
+          "cycle_ms": 240000,
+          "unit_ms": 30000,
+          "policy_id": "83e5e6e2-0267-5928-b92a-fa525d51e384"
+        },
+        "anchor_ms": 1791802800000,
+        "horizon": {
+          "from_ms": 1791716400000,
+          "to_ms": 1792321200000,
+          "repeat_period_ms": 604800000
+        },
+        "settings": {
+          "image_default_ms": 30000,
+          "fade_ms": 400,
+          "orientation": "LANDSCAPE",
+          "footer": {
+            "enabled": true,
+            "height_permille": 60
+          },
+          "offline_alert_days": [
+            7,
+            28
+          ],
+          "heartbeat_interval_ms": 30000,
+          "telemetry_interval_ms": 300000,
+          "panel_url": "https://painel.exemplo.test"
+        },
+        "media": {
+          "m1": {
+            "media_id": "1cef28a3-4137-5443-a891-f45adfc76a6d",
+            "sha256": "472bec8bbe29a574a4d5794d1c8cb21fc4b819d3b189734ffcb62fc00035a384",
+            "size": 1000001,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m2": {
+            "media_id": "940ef36f-929d-5a6a-b962-578102819d51",
+            "sha256": "53314b32180d9400067915303537e91b40f13f8a0c4fc6f81c0bca8547fa969c",
+            "size": 1000002,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m3": {
+            "media_id": "ba09b9dd-8e2b-5a8b-9914-facc5107a45d",
+            "sha256": "04f06a5c0367b40817539972cd0d96ba392c486e36207857938319cc2c284724",
+            "size": 1000003,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m4": {
+            "media_id": "da439163-df79-59c5-8894-9cd0a71eeed6",
+            "sha256": "4921e501ce77ce2ca4269a40747629db102c8eb851ae3be10cf4ec48c07bc798",
+            "size": 1000004,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m5": {
+            "media_id": "9efc2b39-244a-5ed2-bf05-103c59a1505b",
+            "sha256": "0b9f41ed8ec3455ac94ee7f26b5854bf48a85b0286b1778d46222af3172e1ea9",
+            "size": 1000005,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m6": {
+            "media_id": "5eafb9a9-629a-59d6-b4d3-d00b03224119",
+            "sha256": "685885460b8873fb5ebfcef65de9b0aef41f68355d73a1148c499ecd11403277",
+            "size": 1000006,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m7": {
+            "media_id": "760a609e-79ce-5072-b54b-4a0b58ec2ca6",
+            "sha256": "23c87fc766bca4bcb22c0a55e4037736423c0ee60c0e175c6a04306f9169c61d",
+            "size": 1000007,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": null
+          },
+          "m8": {
+            "media_id": "b5dac854-c524-50fc-bc71-18fb78b14040",
+            "sha256": "a607b7689ec517a496d0e14b1275d3ec0c492d3ddb8f4547d7f71c42282a0468",
+            "size": 1000008,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m9": {
+            "media_id": "d5e51605-f7de-5c3e-8a0f-41e460b1964b",
+            "sha256": "20347c6a6a03dfecdcb0b4b6202d706e8566fa5ea8456ce9b3c2f2f2f02481a8",
+            "size": 1000009,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          }
+        },
+        "creatives": {
+          "c1": {
+            "creative_id": "49fd9ed8-3e41-5cff-8784-70f7f5648d87",
+            "code": "RD-A7M2P9",
+            "kind": "EXTERNAL",
+            "campaign_id": "4007d10d-00df-51cf-96ac-27bcd84c9662",
+            "advertiser_id": "eace7257-21ad-5529-89ac-3cdb14aacbf4",
+            "media": "m1",
+            "duration_ms": 120000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c2": {
+            "creative_id": "cd260b91-d941-55cb-999a-3e4e2760e984",
+            "code": "RD-B3C4D5",
+            "kind": "EXTERNAL",
+            "campaign_id": "1781708b-5e0a-597c-8bc9-3d5b4f96e508",
+            "advertiser_id": "fc008390-3cb7-5679-b7e9-6fd23a80c259",
+            "media": "m2",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c3": {
+            "creative_id": "6b376c82-0a45-541c-a226-d4cd76543fdb",
+            "code": "RD-E6F7G8",
+            "kind": "EXTERNAL",
+            "campaign_id": "54dcf3fe-02ce-5f94-a24c-1b1ff190713d",
+            "advertiser_id": "619232fc-bd26-5140-9196-7d4acdeff81d",
+            "media": "m3",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c4": {
+            "creative_id": "80a6edac-6968-5472-bad3-c7fc7f08de21",
+            "code": "RD-H9J2M3",
+            "kind": "EXTERNAL",
+            "campaign_id": "0806561e-70ae-5f28-a0e8-e353a4059a49",
+            "advertiser_id": "48bf49fa-5106-5b28-8464-041468f15584",
+            "media": "m4",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c5": {
+            "creative_id": "94a3d9e1-573b-5921-bf1d-d4dcee3ad46b",
+            "code": "RD-N4P5Q6",
+            "kind": "EXTERNAL",
+            "campaign_id": "78c5a9f5-9027-5f80-8c3a-2159fb3e08e9",
+            "advertiser_id": "8b7cfec8-0f65-5340-8f19-864a472780cf",
+            "media": "m5",
+            "duration_ms": 30000,
+            "valid_from_ms": 1791802800000,
+            "valid_until_ms": 1791803280000,
+            "label": "Publicidade"
+          },
+          "c6": {
+            "creative_id": "1a0104c8-65ce-5622-8717-a2b4789e5bcf",
+            "code": "RD-U2V3Y4",
+            "kind": "INSTITUTIONAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m6",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c7": {
+            "creative_id": "0e193bb4-b8ac-554c-bea2-9f40d4b4d6f9",
+            "code": "RD-R7S8T9",
+            "kind": "INTERNAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m7",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Conteúdo do estabelecimento"
+          },
+          "c8": {
+            "creative_id": "26c29682-710d-5a47-b805-76e4790ac53c",
+            "code": "RD-Z5A6B7",
+            "kind": "INTERNAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m8",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Conteúdo do estabelecimento"
+          },
+          "f1": {
+            "creative_id": "4a412bca-e735-5c60-9c06-4254fdddfb3a",
+            "code": "RD-F2A3B4",
+            "kind": "FALLBACK",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m9",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "RD Mídia Indoor"
+          },
+          "f2": {
+            "creative_id": "1701fa34-df19-5af7-8306-f8482c9a8ddb",
+            "code": "RD-G5H6J7",
+            "kind": "FALLBACK",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m9",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "RD Mídia Indoor"
+          }
+        },
+        "internal_pattern": [
+          [
+            {
+              "c": "c7",
+              "d": 60000
+            },
+            {
+              "c": "c8",
+              "d": 60000
+            },
+            {
+              "c": "c7",
+              "d": 60000
+            }
+          ]
+        ],
+        "fallback": [
+          {
+            "c": "f1",
+            "d": 30000
+          },
+          {
+            "c": "f2",
+            "d": 60000
+          }
+        ],
+        "external_plan": {
+          "1791802800000": [
+            {
+              "i": "91af9dbb-dc14-5b5b-a549-908c6e06488e",
+              "c": "c2",
+              "u": 0,
+              "d": 60000
+            }
+          ],
+          "1791803040000": [
+            {
+              "i": "324d81c5-3dd6-5737-8e7b-b4386dc400e9",
+              "c": "c3",
+              "u": 0,
+              "d": 30000
+            },
+            {
+              "i": "4d5ce81b-16ab-5f47-872d-80e695668eba",
+              "c": "c6",
+              "u": 1,
+              "d": 30000
+            }
+          ]
+        },
+        "emergency": [],
+        "revoked": []
+      },
+      "anchor_ms": 1791802800000,
+      "local_state": {
+        "revoked": [],
+        "media_ready": [
+          "m1",
+          "m2",
+          "m3",
+          "m4",
+          "m5",
+          "m6",
+          "m7",
+          "m8",
+          "m9"
+        ]
+      },
+      "queries": [
+        {
+          "t_ms": 1791802800000,
+          "expected": {
+            "block": "INTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c7",
+            "start_ms": 1791802800000,
+            "end_ms": 1791802860000
+          }
+        },
+        {
+          "t_ms": 1791802920000,
+          "expected": {
+            "block": "INTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c7",
+            "start_ms": 1791802920000,
+            "end_ms": 1791802980000
+          }
+        },
+        {
+          "t_ms": 1791802979999,
+          "expected": {
+            "block": "INTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c7",
+            "start_ms": 1791802920000,
+            "end_ms": 1791802980000
+          }
+        },
+        {
+          "t_ms": 1791802980000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c2",
+            "start_ms": 1791802980000,
+            "end_ms": 1791803040000
+          }
+        },
+        {
+          "t_ms": 1791803039999,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c2",
+            "start_ms": 1791802980000,
+            "end_ms": 1791803040000
+          }
+        },
+        {
+          "t_ms": 1791803220000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c3",
+            "start_ms": 1791803220000,
+            "end_ms": 1791803250000
+          }
+        },
+        {
+          "t_ms": 1791803250000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c6",
+            "start_ms": 1791803250000,
+            "end_ms": 1791803280000
+          }
+        },
+        {
+          "t_ms": 1791803475000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "f1",
+            "start_ms": 1791803460000,
+            "end_ms": 1791803490000
+          }
+        }
+      ]
+    },
+    {
+      "name": "ancora_0807_consultas_0847_084910",
+      "manifest": {
+        "schema": "rd.manifest/1",
+        "manifest_id": "8f49e140-90c3-5d42-86da-290db7766943",
+        "version": 42,
+        "screen_id": "a2fd3775-306c-58d1-951a-5ae23a24ac6d",
+        "screen_code": "TEL-GO-7Q3M",
+        "generated_at_ms": 1791799200000,
+        "timezone": "America/Sao_Paulo",
+        "rotation": {
+          "internal_ms": 120000,
+          "external_ms": 120000,
+          "cycle_ms": 240000,
+          "unit_ms": 30000,
+          "policy_id": "83e5e6e2-0267-5928-b92a-fa525d51e384"
+        },
+        "anchor_ms": null,
+        "horizon": {
+          "from_ms": 1791716400000,
+          "to_ms": 1792321200000,
+          "repeat_period_ms": 604800000
+        },
+        "settings": {
+          "image_default_ms": 30000,
+          "fade_ms": 400,
+          "orientation": "LANDSCAPE",
+          "footer": {
+            "enabled": true,
+            "height_permille": 60
+          },
+          "offline_alert_days": [
+            7,
+            28
+          ],
+          "heartbeat_interval_ms": 30000,
+          "telemetry_interval_ms": 300000,
+          "panel_url": "https://painel.exemplo.test"
+        },
+        "media": {
+          "m1": {
+            "media_id": "1cef28a3-4137-5443-a891-f45adfc76a6d",
+            "sha256": "472bec8bbe29a574a4d5794d1c8cb21fc4b819d3b189734ffcb62fc00035a384",
+            "size": 1000001,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m2": {
+            "media_id": "940ef36f-929d-5a6a-b962-578102819d51",
+            "sha256": "53314b32180d9400067915303537e91b40f13f8a0c4fc6f81c0bca8547fa969c",
+            "size": 1000002,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m3": {
+            "media_id": "ba09b9dd-8e2b-5a8b-9914-facc5107a45d",
+            "sha256": "04f06a5c0367b40817539972cd0d96ba392c486e36207857938319cc2c284724",
+            "size": 1000003,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m4": {
+            "media_id": "da439163-df79-59c5-8894-9cd0a71eeed6",
+            "sha256": "4921e501ce77ce2ca4269a40747629db102c8eb851ae3be10cf4ec48c07bc798",
+            "size": 1000004,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m5": {
+            "media_id": "9efc2b39-244a-5ed2-bf05-103c59a1505b",
+            "sha256": "0b9f41ed8ec3455ac94ee7f26b5854bf48a85b0286b1778d46222af3172e1ea9",
+            "size": 1000005,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m6": {
+            "media_id": "5eafb9a9-629a-59d6-b4d3-d00b03224119",
+            "sha256": "685885460b8873fb5ebfcef65de9b0aef41f68355d73a1148c499ecd11403277",
+            "size": 1000006,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m7": {
+            "media_id": "760a609e-79ce-5072-b54b-4a0b58ec2ca6",
+            "sha256": "23c87fc766bca4bcb22c0a55e4037736423c0ee60c0e175c6a04306f9169c61d",
+            "size": 1000007,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": null
+          },
+          "m8": {
+            "media_id": "b5dac854-c524-50fc-bc71-18fb78b14040",
+            "sha256": "a607b7689ec517a496d0e14b1275d3ec0c492d3ddb8f4547d7f71c42282a0468",
+            "size": 1000008,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m9": {
+            "media_id": "d5e51605-f7de-5c3e-8a0f-41e460b1964b",
+            "sha256": "20347c6a6a03dfecdcb0b4b6202d706e8566fa5ea8456ce9b3c2f2f2f02481a8",
+            "size": 1000009,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          }
+        },
+        "creatives": {
+          "c1": {
+            "creative_id": "49fd9ed8-3e41-5cff-8784-70f7f5648d87",
+            "code": "RD-A7M2P9",
+            "kind": "EXTERNAL",
+            "campaign_id": "4007d10d-00df-51cf-96ac-27bcd84c9662",
+            "advertiser_id": "eace7257-21ad-5529-89ac-3cdb14aacbf4",
+            "media": "m1",
+            "duration_ms": 120000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c2": {
+            "creative_id": "cd260b91-d941-55cb-999a-3e4e2760e984",
+            "code": "RD-B3C4D5",
+            "kind": "EXTERNAL",
+            "campaign_id": "1781708b-5e0a-597c-8bc9-3d5b4f96e508",
+            "advertiser_id": "fc008390-3cb7-5679-b7e9-6fd23a80c259",
+            "media": "m2",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c3": {
+            "creative_id": "6b376c82-0a45-541c-a226-d4cd76543fdb",
+            "code": "RD-E6F7G8",
+            "kind": "EXTERNAL",
+            "campaign_id": "54dcf3fe-02ce-5f94-a24c-1b1ff190713d",
+            "advertiser_id": "619232fc-bd26-5140-9196-7d4acdeff81d",
+            "media": "m3",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c4": {
+            "creative_id": "80a6edac-6968-5472-bad3-c7fc7f08de21",
+            "code": "RD-H9J2M3",
+            "kind": "EXTERNAL",
+            "campaign_id": "0806561e-70ae-5f28-a0e8-e353a4059a49",
+            "advertiser_id": "48bf49fa-5106-5b28-8464-041468f15584",
+            "media": "m4",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c5": {
+            "creative_id": "94a3d9e1-573b-5921-bf1d-d4dcee3ad46b",
+            "code": "RD-N4P5Q6",
+            "kind": "EXTERNAL",
+            "campaign_id": "78c5a9f5-9027-5f80-8c3a-2159fb3e08e9",
+            "advertiser_id": "8b7cfec8-0f65-5340-8f19-864a472780cf",
+            "media": "m5",
+            "duration_ms": 30000,
+            "valid_from_ms": 1791802800000,
+            "valid_until_ms": 1791803280000,
+            "label": "Publicidade"
+          },
+          "c6": {
+            "creative_id": "1a0104c8-65ce-5622-8717-a2b4789e5bcf",
+            "code": "RD-U2V3Y4",
+            "kind": "INSTITUTIONAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m6",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c7": {
+            "creative_id": "0e193bb4-b8ac-554c-bea2-9f40d4b4d6f9",
+            "code": "RD-R7S8T9",
+            "kind": "INTERNAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m7",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Conteúdo do estabelecimento"
+          },
+          "c8": {
+            "creative_id": "26c29682-710d-5a47-b805-76e4790ac53c",
+            "code": "RD-Z5A6B7",
+            "kind": "INTERNAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m8",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Conteúdo do estabelecimento"
+          },
+          "f1": {
+            "creative_id": "4a412bca-e735-5c60-9c06-4254fdddfb3a",
+            "code": "RD-F2A3B4",
+            "kind": "FALLBACK",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m9",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "RD Mídia Indoor"
+          },
+          "f2": {
+            "creative_id": "1701fa34-df19-5af7-8306-f8482c9a8ddb",
+            "code": "RD-G5H6J7",
+            "kind": "FALLBACK",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m9",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "RD Mídia Indoor"
+          }
+        },
+        "internal_pattern": [
+          [
+            {
+              "c": "c7",
+              "d": 60000
+            },
+            {
+              "c": "c8",
+              "d": 60000
+            }
+          ],
+          [
+            {
+              "c": "c8",
+              "d": 60000
+            },
+            {
+              "c": "c7",
+              "d": 60000
+            }
+          ]
+        ],
+        "fallback": [
+          {
+            "c": "f1",
+            "d": 30000
+          },
+          {
+            "c": "f2",
+            "d": 60000
+          }
+        ],
+        "external_plan": {
+          "1791805680000": [
+            {
+              "i": "c75dbbe2-0f0f-5f3d-b3da-a0304a6a1d91",
+              "c": "c2",
+              "u": 0,
+              "d": 60000
+            },
+            {
+              "i": "38da9505-61be-5824-94d9-c9c8ef7c440c",
+              "c": "c3",
+              "u": 3,
+              "d": 30000
+            }
+          ],
+          "1791803280000": [
+            {
+              "i": "c662e3eb-a841-5d4a-9862-da8aefec730e",
+              "c": "c4",
+              "u": 0,
+              "d": 60000
+            }
+          ]
+        },
+        "emergency": [],
+        "revoked": []
+      },
+      "anchor_ms": 1791803220000,
+      "local_state": {
+        "revoked": [],
+        "media_ready": [
+          "m1",
+          "m2",
+          "m3",
+          "m4",
+          "m5",
+          "m6",
+          "m7",
+          "m8",
+          "m9"
+        ]
+      },
+      "queries": [
+        {
+          "t_ms": 1791803220000,
+          "expected": {
+            "block": "INTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c7",
+            "start_ms": 1791803220000,
+            "end_ms": 1791803280000
+          }
+        },
+        {
+          "t_ms": 1791803339999,
+          "expected": {
+            "block": "INTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c8",
+            "start_ms": 1791803280000,
+            "end_ms": 1791803340000
+          }
+        },
+        {
+          "t_ms": 1791803340000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c4",
+            "start_ms": 1791803340000,
+            "end_ms": 1791803400000
+          }
+        },
+        {
+          "t_ms": 1791805620000,
+          "expected": {
+            "block": "INTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c7",
+            "start_ms": 1791805620000,
+            "end_ms": 1791805680000
+          }
+        },
+        {
+          "t_ms": 1791805650000,
+          "expected": {
+            "block": "INTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c7",
+            "start_ms": 1791805620000,
+            "end_ms": 1791805680000
+          }
+        },
+        {
+          "t_ms": 1791805740000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c2",
+            "start_ms": 1791805740000,
+            "end_ms": 1791805800000
+          }
+        },
+        {
+          "t_ms": 1791805750000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c2",
+            "start_ms": 1791805740000,
+            "end_ms": 1791805800000
+          }
+        },
+        {
+          "t_ms": 1791805810000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "f1",
+            "start_ms": 1791805800000,
+            "end_ms": 1791805830000
+          }
+        },
+        {
+          "t_ms": 1791805840000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c3",
+            "start_ms": 1791805830000,
+            "end_ms": 1791805860000
+          }
+        }
+      ],
+      "note": "manifest.anchor_ms = null; âncora local 08:07 (America/Sao_Paulo); bucket = floor(s/C)·C"
+    },
+    {
+      "name": "fora_do_horizonte_repeticao_semanal",
+      "manifest": {
+        "schema": "rd.manifest/1",
+        "manifest_id": "8f49e140-90c3-5d42-86da-290db7766943",
+        "version": 42,
+        "screen_id": "a2fd3775-306c-58d1-951a-5ae23a24ac6d",
+        "screen_code": "TEL-GO-7Q3M",
+        "generated_at_ms": 1791799200000,
+        "timezone": "America/Sao_Paulo",
+        "rotation": {
+          "internal_ms": 120000,
+          "external_ms": 120000,
+          "cycle_ms": 240000,
+          "unit_ms": 30000,
+          "policy_id": "83e5e6e2-0267-5928-b92a-fa525d51e384"
+        },
+        "anchor_ms": 1791802800000,
+        "horizon": {
+          "from_ms": 1791716400000,
+          "to_ms": 1792321200000,
+          "repeat_period_ms": 604800000
+        },
+        "settings": {
+          "image_default_ms": 30000,
+          "fade_ms": 400,
+          "orientation": "LANDSCAPE",
+          "footer": {
+            "enabled": true,
+            "height_permille": 60
+          },
+          "offline_alert_days": [
+            7,
+            28
+          ],
+          "heartbeat_interval_ms": 30000,
+          "telemetry_interval_ms": 300000,
+          "panel_url": "https://painel.exemplo.test"
+        },
+        "media": {
+          "m1": {
+            "media_id": "1cef28a3-4137-5443-a891-f45adfc76a6d",
+            "sha256": "472bec8bbe29a574a4d5794d1c8cb21fc4b819d3b189734ffcb62fc00035a384",
+            "size": 1000001,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m2": {
+            "media_id": "940ef36f-929d-5a6a-b962-578102819d51",
+            "sha256": "53314b32180d9400067915303537e91b40f13f8a0c4fc6f81c0bca8547fa969c",
+            "size": 1000002,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m3": {
+            "media_id": "ba09b9dd-8e2b-5a8b-9914-facc5107a45d",
+            "sha256": "04f06a5c0367b40817539972cd0d96ba392c486e36207857938319cc2c284724",
+            "size": 1000003,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m4": {
+            "media_id": "da439163-df79-59c5-8894-9cd0a71eeed6",
+            "sha256": "4921e501ce77ce2ca4269a40747629db102c8eb851ae3be10cf4ec48c07bc798",
+            "size": 1000004,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m5": {
+            "media_id": "9efc2b39-244a-5ed2-bf05-103c59a1505b",
+            "sha256": "0b9f41ed8ec3455ac94ee7f26b5854bf48a85b0286b1778d46222af3172e1ea9",
+            "size": 1000005,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m6": {
+            "media_id": "5eafb9a9-629a-59d6-b4d3-d00b03224119",
+            "sha256": "685885460b8873fb5ebfcef65de9b0aef41f68355d73a1148c499ecd11403277",
+            "size": 1000006,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m7": {
+            "media_id": "760a609e-79ce-5072-b54b-4a0b58ec2ca6",
+            "sha256": "23c87fc766bca4bcb22c0a55e4037736423c0ee60c0e175c6a04306f9169c61d",
+            "size": 1000007,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": null
+          },
+          "m8": {
+            "media_id": "b5dac854-c524-50fc-bc71-18fb78b14040",
+            "sha256": "a607b7689ec517a496d0e14b1275d3ec0c492d3ddb8f4547d7f71c42282a0468",
+            "size": 1000008,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m9": {
+            "media_id": "d5e51605-f7de-5c3e-8a0f-41e460b1964b",
+            "sha256": "20347c6a6a03dfecdcb0b4b6202d706e8566fa5ea8456ce9b3c2f2f2f02481a8",
+            "size": 1000009,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          }
+        },
+        "creatives": {
+          "c1": {
+            "creative_id": "49fd9ed8-3e41-5cff-8784-70f7f5648d87",
+            "code": "RD-A7M2P9",
+            "kind": "EXTERNAL",
+            "campaign_id": "4007d10d-00df-51cf-96ac-27bcd84c9662",
+            "advertiser_id": "eace7257-21ad-5529-89ac-3cdb14aacbf4",
+            "media": "m1",
+            "duration_ms": 120000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c2": {
+            "creative_id": "cd260b91-d941-55cb-999a-3e4e2760e984",
+            "code": "RD-B3C4D5",
+            "kind": "EXTERNAL",
+            "campaign_id": "1781708b-5e0a-597c-8bc9-3d5b4f96e508",
+            "advertiser_id": "fc008390-3cb7-5679-b7e9-6fd23a80c259",
+            "media": "m2",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c3": {
+            "creative_id": "6b376c82-0a45-541c-a226-d4cd76543fdb",
+            "code": "RD-E6F7G8",
+            "kind": "EXTERNAL",
+            "campaign_id": "54dcf3fe-02ce-5f94-a24c-1b1ff190713d",
+            "advertiser_id": "619232fc-bd26-5140-9196-7d4acdeff81d",
+            "media": "m3",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c4": {
+            "creative_id": "80a6edac-6968-5472-bad3-c7fc7f08de21",
+            "code": "RD-H9J2M3",
+            "kind": "EXTERNAL",
+            "campaign_id": "0806561e-70ae-5f28-a0e8-e353a4059a49",
+            "advertiser_id": "48bf49fa-5106-5b28-8464-041468f15584",
+            "media": "m4",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c5": {
+            "creative_id": "94a3d9e1-573b-5921-bf1d-d4dcee3ad46b",
+            "code": "RD-N4P5Q6",
+            "kind": "EXTERNAL",
+            "campaign_id": "78c5a9f5-9027-5f80-8c3a-2159fb3e08e9",
+            "advertiser_id": "8b7cfec8-0f65-5340-8f19-864a472780cf",
+            "media": "m5",
+            "duration_ms": 30000,
+            "valid_from_ms": 1791802800000,
+            "valid_until_ms": 1791803280000,
+            "label": "Publicidade"
+          },
+          "c6": {
+            "creative_id": "1a0104c8-65ce-5622-8717-a2b4789e5bcf",
+            "code": "RD-U2V3Y4",
+            "kind": "INSTITUTIONAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m6",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c7": {
+            "creative_id": "0e193bb4-b8ac-554c-bea2-9f40d4b4d6f9",
+            "code": "RD-R7S8T9",
+            "kind": "INTERNAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m7",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Conteúdo do estabelecimento"
+          },
+          "c8": {
+            "creative_id": "26c29682-710d-5a47-b805-76e4790ac53c",
+            "code": "RD-Z5A6B7",
+            "kind": "INTERNAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m8",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Conteúdo do estabelecimento"
+          },
+          "f1": {
+            "creative_id": "4a412bca-e735-5c60-9c06-4254fdddfb3a",
+            "code": "RD-F2A3B4",
+            "kind": "FALLBACK",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m9",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "RD Mídia Indoor"
+          },
+          "f2": {
+            "creative_id": "1701fa34-df19-5af7-8306-f8482c9a8ddb",
+            "code": "RD-G5H6J7",
+            "kind": "FALLBACK",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m9",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "RD Mídia Indoor"
+          }
+        },
+        "internal_pattern": [
+          [
+            {
+              "c": "c7",
+              "d": 60000
+            },
+            {
+              "c": "c8",
+              "d": 60000
+            }
+          ],
+          [
+            {
+              "c": "c8",
+              "d": 60000
+            },
+            {
+              "c": "c7",
+              "d": 60000
+            }
+          ]
+        ],
+        "fallback": [
+          {
+            "c": "f1",
+            "d": 30000
+          },
+          {
+            "c": "f2",
+            "d": 60000
+          }
+        ],
+        "external_plan": {
+          "1791803040000": [
+            {
+              "i": "324d81c5-3dd6-5737-8e7b-b4386dc400e9",
+              "c": "c2",
+              "u": 0,
+              "d": 60000
+            },
+            {
+              "i": "cab09231-d489-5958-bf46-fee1ebbf536c",
+              "c": "c4",
+              "u": 2,
+              "d": 60000
+            }
+          ]
+        },
+        "emergency": [],
+        "revoked": []
+      },
+      "anchor_ms": 1791802800000,
+      "local_state": {
+        "revoked": [],
+        "media_ready": [
+          "m1",
+          "m2",
+          "m3",
+          "m4",
+          "m5",
+          "m6",
+          "m7",
+          "m8",
+          "m9"
+        ]
+      },
+      "queries": [
+        {
+          "t_ms": 1792407970000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c2",
+            "start_ms": 1792407960000,
+            "end_ms": 1792408020000
+          }
+        },
+        {
+          "t_ms": 1791198430000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c4",
+            "start_ms": 1791198420000,
+            "end_ms": 1791198480000
+          }
+        },
+        {
+          "t_ms": 1792408030000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c4",
+            "start_ms": 1792408020000,
+            "end_ms": 1792408080000
+          }
+        }
+      ]
+    },
+    {
+      "name": "horizonte_curto_sem_correspondencia",
+      "manifest": {
+        "schema": "rd.manifest/1",
+        "manifest_id": "8f49e140-90c3-5d42-86da-290db7766943",
+        "version": 42,
+        "screen_id": "a2fd3775-306c-58d1-951a-5ae23a24ac6d",
+        "screen_code": "TEL-GO-7Q3M",
+        "generated_at_ms": 1791799200000,
+        "timezone": "America/Sao_Paulo",
+        "rotation": {
+          "internal_ms": 120000,
+          "external_ms": 120000,
+          "cycle_ms": 240000,
+          "unit_ms": 30000,
+          "policy_id": "83e5e6e2-0267-5928-b92a-fa525d51e384"
+        },
+        "anchor_ms": 1791802800000,
+        "horizon": {
+          "from_ms": 1791802800000,
+          "to_ms": 1791889200000,
+          "repeat_period_ms": 604800000
+        },
+        "settings": {
+          "image_default_ms": 30000,
+          "fade_ms": 400,
+          "orientation": "LANDSCAPE",
+          "footer": {
+            "enabled": true,
+            "height_permille": 60
+          },
+          "offline_alert_days": [
+            7,
+            28
+          ],
+          "heartbeat_interval_ms": 30000,
+          "telemetry_interval_ms": 300000,
+          "panel_url": "https://painel.exemplo.test"
+        },
+        "media": {
+          "m1": {
+            "media_id": "1cef28a3-4137-5443-a891-f45adfc76a6d",
+            "sha256": "472bec8bbe29a574a4d5794d1c8cb21fc4b819d3b189734ffcb62fc00035a384",
+            "size": 1000001,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m2": {
+            "media_id": "940ef36f-929d-5a6a-b962-578102819d51",
+            "sha256": "53314b32180d9400067915303537e91b40f13f8a0c4fc6f81c0bca8547fa969c",
+            "size": 1000002,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m3": {
+            "media_id": "ba09b9dd-8e2b-5a8b-9914-facc5107a45d",
+            "sha256": "04f06a5c0367b40817539972cd0d96ba392c486e36207857938319cc2c284724",
+            "size": 1000003,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m4": {
+            "media_id": "da439163-df79-59c5-8894-9cd0a71eeed6",
+            "sha256": "4921e501ce77ce2ca4269a40747629db102c8eb851ae3be10cf4ec48c07bc798",
+            "size": 1000004,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m5": {
+            "media_id": "9efc2b39-244a-5ed2-bf05-103c59a1505b",
+            "sha256": "0b9f41ed8ec3455ac94ee7f26b5854bf48a85b0286b1778d46222af3172e1ea9",
+            "size": 1000005,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m6": {
+            "media_id": "5eafb9a9-629a-59d6-b4d3-d00b03224119",
+            "sha256": "685885460b8873fb5ebfcef65de9b0aef41f68355d73a1148c499ecd11403277",
+            "size": 1000006,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m7": {
+            "media_id": "760a609e-79ce-5072-b54b-4a0b58ec2ca6",
+            "sha256": "23c87fc766bca4bcb22c0a55e4037736423c0ee60c0e175c6a04306f9169c61d",
+            "size": 1000007,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": null
+          },
+          "m8": {
+            "media_id": "b5dac854-c524-50fc-bc71-18fb78b14040",
+            "sha256": "a607b7689ec517a496d0e14b1275d3ec0c492d3ddb8f4547d7f71c42282a0468",
+            "size": 1000008,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m9": {
+            "media_id": "d5e51605-f7de-5c3e-8a0f-41e460b1964b",
+            "sha256": "20347c6a6a03dfecdcb0b4b6202d706e8566fa5ea8456ce9b3c2f2f2f02481a8",
+            "size": 1000009,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          }
+        },
+        "creatives": {
+          "c1": {
+            "creative_id": "49fd9ed8-3e41-5cff-8784-70f7f5648d87",
+            "code": "RD-A7M2P9",
+            "kind": "EXTERNAL",
+            "campaign_id": "4007d10d-00df-51cf-96ac-27bcd84c9662",
+            "advertiser_id": "eace7257-21ad-5529-89ac-3cdb14aacbf4",
+            "media": "m1",
+            "duration_ms": 120000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c2": {
+            "creative_id": "cd260b91-d941-55cb-999a-3e4e2760e984",
+            "code": "RD-B3C4D5",
+            "kind": "EXTERNAL",
+            "campaign_id": "1781708b-5e0a-597c-8bc9-3d5b4f96e508",
+            "advertiser_id": "fc008390-3cb7-5679-b7e9-6fd23a80c259",
+            "media": "m2",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c3": {
+            "creative_id": "6b376c82-0a45-541c-a226-d4cd76543fdb",
+            "code": "RD-E6F7G8",
+            "kind": "EXTERNAL",
+            "campaign_id": "54dcf3fe-02ce-5f94-a24c-1b1ff190713d",
+            "advertiser_id": "619232fc-bd26-5140-9196-7d4acdeff81d",
+            "media": "m3",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c4": {
+            "creative_id": "80a6edac-6968-5472-bad3-c7fc7f08de21",
+            "code": "RD-H9J2M3",
+            "kind": "EXTERNAL",
+            "campaign_id": "0806561e-70ae-5f28-a0e8-e353a4059a49",
+            "advertiser_id": "48bf49fa-5106-5b28-8464-041468f15584",
+            "media": "m4",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c5": {
+            "creative_id": "94a3d9e1-573b-5921-bf1d-d4dcee3ad46b",
+            "code": "RD-N4P5Q6",
+            "kind": "EXTERNAL",
+            "campaign_id": "78c5a9f5-9027-5f80-8c3a-2159fb3e08e9",
+            "advertiser_id": "8b7cfec8-0f65-5340-8f19-864a472780cf",
+            "media": "m5",
+            "duration_ms": 30000,
+            "valid_from_ms": 1791802800000,
+            "valid_until_ms": 1791803280000,
+            "label": "Publicidade"
+          },
+          "c6": {
+            "creative_id": "1a0104c8-65ce-5622-8717-a2b4789e5bcf",
+            "code": "RD-U2V3Y4",
+            "kind": "INSTITUTIONAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m6",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c7": {
+            "creative_id": "0e193bb4-b8ac-554c-bea2-9f40d4b4d6f9",
+            "code": "RD-R7S8T9",
+            "kind": "INTERNAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m7",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Conteúdo do estabelecimento"
+          },
+          "c8": {
+            "creative_id": "26c29682-710d-5a47-b805-76e4790ac53c",
+            "code": "RD-Z5A6B7",
+            "kind": "INTERNAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m8",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Conteúdo do estabelecimento"
+          },
+          "f1": {
+            "creative_id": "4a412bca-e735-5c60-9c06-4254fdddfb3a",
+            "code": "RD-F2A3B4",
+            "kind": "FALLBACK",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m9",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "RD Mídia Indoor"
+          },
+          "f2": {
+            "creative_id": "1701fa34-df19-5af7-8306-f8482c9a8ddb",
+            "code": "RD-G5H6J7",
+            "kind": "FALLBACK",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m9",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "RD Mídia Indoor"
+          }
+        },
+        "internal_pattern": [
+          [
+            {
+              "c": "c7",
+              "d": 60000
+            },
+            {
+              "c": "c8",
+              "d": 60000
+            }
+          ],
+          [
+            {
+              "c": "c8",
+              "d": 60000
+            },
+            {
+              "c": "c7",
+              "d": 60000
+            }
+          ]
+        ],
+        "fallback": [
+          {
+            "c": "f1",
+            "d": 30000
+          },
+          {
+            "c": "f2",
+            "d": 60000
+          }
+        ],
+        "external_plan": {
+          "1791803040000": [
+            {
+              "i": "324d81c5-3dd6-5737-8e7b-b4386dc400e9",
+              "c": "c2",
+              "u": 0,
+              "d": 60000
+            },
+            {
+              "i": "cab09231-d489-5958-bf46-fee1ebbf536c",
+              "c": "c4",
+              "u": 2,
+              "d": 60000
+            }
+          ]
+        },
+        "emergency": [],
+        "revoked": []
+      },
+      "anchor_ms": 1791802800000,
+      "local_state": {
+        "revoked": [],
+        "media_ready": [
+          "m1",
+          "m2",
+          "m3",
+          "m4",
+          "m5",
+          "m6",
+          "m7",
+          "m8",
+          "m9"
+        ]
+      },
+      "queries": [
+        {
+          "t_ms": 1791975970000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "f1",
+            "start_ms": 1791975960000,
+            "end_ms": 1791975990000
+          }
+        }
+      ]
+    },
+    {
+      "name": "vencido_e_nao_vigente",
+      "manifest": {
+        "schema": "rd.manifest/1",
+        "manifest_id": "8f49e140-90c3-5d42-86da-290db7766943",
+        "version": 42,
+        "screen_id": "a2fd3775-306c-58d1-951a-5ae23a24ac6d",
+        "screen_code": "TEL-GO-7Q3M",
+        "generated_at_ms": 1791799200000,
+        "timezone": "America/Sao_Paulo",
+        "rotation": {
+          "internal_ms": 120000,
+          "external_ms": 120000,
+          "cycle_ms": 240000,
+          "unit_ms": 30000,
+          "policy_id": "83e5e6e2-0267-5928-b92a-fa525d51e384"
+        },
+        "anchor_ms": 1791802800000,
+        "horizon": {
+          "from_ms": 1791716400000,
+          "to_ms": 1792321200000,
+          "repeat_period_ms": 604800000
+        },
+        "settings": {
+          "image_default_ms": 30000,
+          "fade_ms": 400,
+          "orientation": "LANDSCAPE",
+          "footer": {
+            "enabled": true,
+            "height_permille": 60
+          },
+          "offline_alert_days": [
+            7,
+            28
+          ],
+          "heartbeat_interval_ms": 30000,
+          "telemetry_interval_ms": 300000,
+          "panel_url": "https://painel.exemplo.test"
+        },
+        "media": {
+          "m1": {
+            "media_id": "1cef28a3-4137-5443-a891-f45adfc76a6d",
+            "sha256": "472bec8bbe29a574a4d5794d1c8cb21fc4b819d3b189734ffcb62fc00035a384",
+            "size": 1000001,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m2": {
+            "media_id": "940ef36f-929d-5a6a-b962-578102819d51",
+            "sha256": "53314b32180d9400067915303537e91b40f13f8a0c4fc6f81c0bca8547fa969c",
+            "size": 1000002,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m3": {
+            "media_id": "ba09b9dd-8e2b-5a8b-9914-facc5107a45d",
+            "sha256": "04f06a5c0367b40817539972cd0d96ba392c486e36207857938319cc2c284724",
+            "size": 1000003,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m4": {
+            "media_id": "da439163-df79-59c5-8894-9cd0a71eeed6",
+            "sha256": "4921e501ce77ce2ca4269a40747629db102c8eb851ae3be10cf4ec48c07bc798",
+            "size": 1000004,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m5": {
+            "media_id": "9efc2b39-244a-5ed2-bf05-103c59a1505b",
+            "sha256": "0b9f41ed8ec3455ac94ee7f26b5854bf48a85b0286b1778d46222af3172e1ea9",
+            "size": 1000005,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m6": {
+            "media_id": "5eafb9a9-629a-59d6-b4d3-d00b03224119",
+            "sha256": "685885460b8873fb5ebfcef65de9b0aef41f68355d73a1148c499ecd11403277",
+            "size": 1000006,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m7": {
+            "media_id": "760a609e-79ce-5072-b54b-4a0b58ec2ca6",
+            "sha256": "23c87fc766bca4bcb22c0a55e4037736423c0ee60c0e175c6a04306f9169c61d",
+            "size": 1000007,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": null
+          },
+          "m8": {
+            "media_id": "b5dac854-c524-50fc-bc71-18fb78b14040",
+            "sha256": "a607b7689ec517a496d0e14b1275d3ec0c492d3ddb8f4547d7f71c42282a0468",
+            "size": 1000008,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m9": {
+            "media_id": "d5e51605-f7de-5c3e-8a0f-41e460b1964b",
+            "sha256": "20347c6a6a03dfecdcb0b4b6202d706e8566fa5ea8456ce9b3c2f2f2f02481a8",
+            "size": 1000009,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          }
+        },
+        "creatives": {
+          "c1": {
+            "creative_id": "49fd9ed8-3e41-5cff-8784-70f7f5648d87",
+            "code": "RD-A7M2P9",
+            "kind": "EXTERNAL",
+            "campaign_id": "4007d10d-00df-51cf-96ac-27bcd84c9662",
+            "advertiser_id": "eace7257-21ad-5529-89ac-3cdb14aacbf4",
+            "media": "m1",
+            "duration_ms": 120000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c2": {
+            "creative_id": "cd260b91-d941-55cb-999a-3e4e2760e984",
+            "code": "RD-B3C4D5",
+            "kind": "EXTERNAL",
+            "campaign_id": "1781708b-5e0a-597c-8bc9-3d5b4f96e508",
+            "advertiser_id": "fc008390-3cb7-5679-b7e9-6fd23a80c259",
+            "media": "m2",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c3": {
+            "creative_id": "6b376c82-0a45-541c-a226-d4cd76543fdb",
+            "code": "RD-E6F7G8",
+            "kind": "EXTERNAL",
+            "campaign_id": "54dcf3fe-02ce-5f94-a24c-1b1ff190713d",
+            "advertiser_id": "619232fc-bd26-5140-9196-7d4acdeff81d",
+            "media": "m3",
+            "duration_ms": 30000,
+            "valid_from_ms": 1791803640001,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c4": {
+            "creative_id": "80a6edac-6968-5472-bad3-c7fc7f08de21",
+            "code": "RD-H9J2M3",
+            "kind": "EXTERNAL",
+            "campaign_id": "0806561e-70ae-5f28-a0e8-e353a4059a49",
+            "advertiser_id": "48bf49fa-5106-5b28-8464-041468f15584",
+            "media": "m4",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c5": {
+            "creative_id": "94a3d9e1-573b-5921-bf1d-d4dcee3ad46b",
+            "code": "RD-N4P5Q6",
+            "kind": "EXTERNAL",
+            "campaign_id": "78c5a9f5-9027-5f80-8c3a-2159fb3e08e9",
+            "advertiser_id": "8b7cfec8-0f65-5340-8f19-864a472780cf",
+            "media": "m5",
+            "duration_ms": 30000,
+            "valid_from_ms": 1791802800000,
+            "valid_until_ms": 1791803280000,
+            "label": "Publicidade"
+          },
+          "c6": {
+            "creative_id": "1a0104c8-65ce-5622-8717-a2b4789e5bcf",
+            "code": "RD-U2V3Y4",
+            "kind": "INSTITUTIONAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m6",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c7": {
+            "creative_id": "0e193bb4-b8ac-554c-bea2-9f40d4b4d6f9",
+            "code": "RD-R7S8T9",
+            "kind": "INTERNAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m7",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Conteúdo do estabelecimento"
+          },
+          "c8": {
+            "creative_id": "26c29682-710d-5a47-b805-76e4790ac53c",
+            "code": "RD-Z5A6B7",
+            "kind": "INTERNAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m8",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Conteúdo do estabelecimento"
+          },
+          "f1": {
+            "creative_id": "4a412bca-e735-5c60-9c06-4254fdddfb3a",
+            "code": "RD-F2A3B4",
+            "kind": "FALLBACK",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m9",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "RD Mídia Indoor"
+          },
+          "f2": {
+            "creative_id": "1701fa34-df19-5af7-8306-f8482c9a8ddb",
+            "code": "RD-G5H6J7",
+            "kind": "FALLBACK",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m9",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "RD Mídia Indoor"
+          }
+        },
+        "internal_pattern": [
+          [
+            {
+              "c": "c7",
+              "d": 60000
+            },
+            {
+              "c": "c8",
+              "d": 60000
+            }
+          ],
+          [
+            {
+              "c": "c8",
+              "d": 60000
+            },
+            {
+              "c": "c7",
+              "d": 60000
+            }
+          ]
+        ],
+        "fallback": [
+          {
+            "c": "f1",
+            "d": 30000
+          },
+          {
+            "c": "f2",
+            "d": 60000
+          }
+        ],
+        "external_plan": {
+          "1791803040000": [
+            {
+              "i": "324d81c5-3dd6-5737-8e7b-b4386dc400e9",
+              "c": "c5",
+              "u": 0,
+              "d": 30000
+            }
+          ],
+          "1791803280000": [
+            {
+              "i": "c662e3eb-a841-5d4a-9862-da8aefec730e",
+              "c": "c5",
+              "u": 0,
+              "d": 30000
+            }
+          ],
+          "1791803520000": [
+            {
+              "i": "4f18e256-f008-5386-9d8f-3e6a16db45df",
+              "c": "c3",
+              "u": 0,
+              "d": 30000
+            }
+          ]
+        },
+        "emergency": [],
+        "revoked": []
+      },
+      "anchor_ms": 1791802800000,
+      "local_state": {
+        "revoked": [],
+        "media_ready": [
+          "m1",
+          "m2",
+          "m3",
+          "m4",
+          "m5",
+          "m6",
+          "m7",
+          "m8",
+          "m9"
+        ]
+      },
+      "queries": [
+        {
+          "t_ms": 1791803161000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c5",
+            "start_ms": 1791803160000,
+            "end_ms": 1791803190000
+          }
+        },
+        {
+          "t_ms": 1791803401000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "f1",
+            "start_ms": 1791803400000,
+            "end_ms": 1791803430000
+          }
+        },
+        {
+          "t_ms": 1791803641000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "f1",
+            "start_ms": 1791803640000,
+            "end_ms": 1791803670000
+          }
+        }
+      ]
+    },
+    {
+      "name": "revogado_e_midia_ausente",
+      "manifest": {
+        "schema": "rd.manifest/1",
+        "manifest_id": "8f49e140-90c3-5d42-86da-290db7766943",
+        "version": 42,
+        "screen_id": "a2fd3775-306c-58d1-951a-5ae23a24ac6d",
+        "screen_code": "TEL-GO-7Q3M",
+        "generated_at_ms": 1791799200000,
+        "timezone": "America/Sao_Paulo",
+        "rotation": {
+          "internal_ms": 120000,
+          "external_ms": 120000,
+          "cycle_ms": 240000,
+          "unit_ms": 30000,
+          "policy_id": "83e5e6e2-0267-5928-b92a-fa525d51e384"
+        },
+        "anchor_ms": 1791802800000,
+        "horizon": {
+          "from_ms": 1791716400000,
+          "to_ms": 1792321200000,
+          "repeat_period_ms": 604800000
+        },
+        "settings": {
+          "image_default_ms": 30000,
+          "fade_ms": 400,
+          "orientation": "LANDSCAPE",
+          "footer": {
+            "enabled": true,
+            "height_permille": 60
+          },
+          "offline_alert_days": [
+            7,
+            28
+          ],
+          "heartbeat_interval_ms": 30000,
+          "telemetry_interval_ms": 300000,
+          "panel_url": "https://painel.exemplo.test"
+        },
+        "media": {
+          "m1": {
+            "media_id": "1cef28a3-4137-5443-a891-f45adfc76a6d",
+            "sha256": "472bec8bbe29a574a4d5794d1c8cb21fc4b819d3b189734ffcb62fc00035a384",
+            "size": 1000001,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m2": {
+            "media_id": "940ef36f-929d-5a6a-b962-578102819d51",
+            "sha256": "53314b32180d9400067915303537e91b40f13f8a0c4fc6f81c0bca8547fa969c",
+            "size": 1000002,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m3": {
+            "media_id": "ba09b9dd-8e2b-5a8b-9914-facc5107a45d",
+            "sha256": "04f06a5c0367b40817539972cd0d96ba392c486e36207857938319cc2c284724",
+            "size": 1000003,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m4": {
+            "media_id": "da439163-df79-59c5-8894-9cd0a71eeed6",
+            "sha256": "4921e501ce77ce2ca4269a40747629db102c8eb851ae3be10cf4ec48c07bc798",
+            "size": 1000004,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m5": {
+            "media_id": "9efc2b39-244a-5ed2-bf05-103c59a1505b",
+            "sha256": "0b9f41ed8ec3455ac94ee7f26b5854bf48a85b0286b1778d46222af3172e1ea9",
+            "size": 1000005,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m6": {
+            "media_id": "5eafb9a9-629a-59d6-b4d3-d00b03224119",
+            "sha256": "685885460b8873fb5ebfcef65de9b0aef41f68355d73a1148c499ecd11403277",
+            "size": 1000006,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m7": {
+            "media_id": "760a609e-79ce-5072-b54b-4a0b58ec2ca6",
+            "sha256": "23c87fc766bca4bcb22c0a55e4037736423c0ee60c0e175c6a04306f9169c61d",
+            "size": 1000007,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": null
+          },
+          "m8": {
+            "media_id": "b5dac854-c524-50fc-bc71-18fb78b14040",
+            "sha256": "a607b7689ec517a496d0e14b1275d3ec0c492d3ddb8f4547d7f71c42282a0468",
+            "size": 1000008,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m9": {
+            "media_id": "d5e51605-f7de-5c3e-8a0f-41e460b1964b",
+            "sha256": "20347c6a6a03dfecdcb0b4b6202d706e8566fa5ea8456ce9b3c2f2f2f02481a8",
+            "size": 1000009,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          }
+        },
+        "creatives": {
+          "c1": {
+            "creative_id": "49fd9ed8-3e41-5cff-8784-70f7f5648d87",
+            "code": "RD-A7M2P9",
+            "kind": "EXTERNAL",
+            "campaign_id": "4007d10d-00df-51cf-96ac-27bcd84c9662",
+            "advertiser_id": "eace7257-21ad-5529-89ac-3cdb14aacbf4",
+            "media": "m1",
+            "duration_ms": 120000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c2": {
+            "creative_id": "cd260b91-d941-55cb-999a-3e4e2760e984",
+            "code": "RD-B3C4D5",
+            "kind": "EXTERNAL",
+            "campaign_id": "1781708b-5e0a-597c-8bc9-3d5b4f96e508",
+            "advertiser_id": "fc008390-3cb7-5679-b7e9-6fd23a80c259",
+            "media": "m2",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c3": {
+            "creative_id": "6b376c82-0a45-541c-a226-d4cd76543fdb",
+            "code": "RD-E6F7G8",
+            "kind": "EXTERNAL",
+            "campaign_id": "54dcf3fe-02ce-5f94-a24c-1b1ff190713d",
+            "advertiser_id": "619232fc-bd26-5140-9196-7d4acdeff81d",
+            "media": "m3",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c4": {
+            "creative_id": "80a6edac-6968-5472-bad3-c7fc7f08de21",
+            "code": "RD-H9J2M3",
+            "kind": "EXTERNAL",
+            "campaign_id": "0806561e-70ae-5f28-a0e8-e353a4059a49",
+            "advertiser_id": "48bf49fa-5106-5b28-8464-041468f15584",
+            "media": "m4",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c5": {
+            "creative_id": "94a3d9e1-573b-5921-bf1d-d4dcee3ad46b",
+            "code": "RD-N4P5Q6",
+            "kind": "EXTERNAL",
+            "campaign_id": "78c5a9f5-9027-5f80-8c3a-2159fb3e08e9",
+            "advertiser_id": "8b7cfec8-0f65-5340-8f19-864a472780cf",
+            "media": "m5",
+            "duration_ms": 30000,
+            "valid_from_ms": 1791802800000,
+            "valid_until_ms": 1791803280000,
+            "label": "Publicidade"
+          },
+          "c6": {
+            "creative_id": "1a0104c8-65ce-5622-8717-a2b4789e5bcf",
+            "code": "RD-U2V3Y4",
+            "kind": "INSTITUTIONAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m6",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c7": {
+            "creative_id": "0e193bb4-b8ac-554c-bea2-9f40d4b4d6f9",
+            "code": "RD-R7S8T9",
+            "kind": "INTERNAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m7",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Conteúdo do estabelecimento"
+          },
+          "c8": {
+            "creative_id": "26c29682-710d-5a47-b805-76e4790ac53c",
+            "code": "RD-Z5A6B7",
+            "kind": "INTERNAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m8",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Conteúdo do estabelecimento"
+          },
+          "f1": {
+            "creative_id": "4a412bca-e735-5c60-9c06-4254fdddfb3a",
+            "code": "RD-F2A3B4",
+            "kind": "FALLBACK",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m9",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "RD Mídia Indoor"
+          },
+          "f2": {
+            "creative_id": "1701fa34-df19-5af7-8306-f8482c9a8ddb",
+            "code": "RD-G5H6J7",
+            "kind": "FALLBACK",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m9",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "RD Mídia Indoor"
+          }
+        },
+        "internal_pattern": [
+          [
+            {
+              "c": "c7",
+              "d": 60000
+            },
+            {
+              "c": "c8",
+              "d": 60000
+            }
+          ],
+          [
+            {
+              "c": "c8",
+              "d": 60000
+            },
+            {
+              "c": "c7",
+              "d": 60000
+            }
+          ]
+        ],
+        "fallback": [
+          {
+            "c": "f1",
+            "d": 30000
+          },
+          {
+            "c": "f2",
+            "d": 60000
+          }
+        ],
+        "external_plan": {
+          "1791802800000": [
+            {
+              "i": "91af9dbb-dc14-5b5b-a549-908c6e06488e",
+              "c": "c2",
+              "u": 0,
+              "d": 60000
+            },
+            {
+              "i": "5400aea7-1990-54b7-a522-73dc81712eee",
+              "c": "c4",
+              "u": 2,
+              "d": 60000
+            }
+          ],
+          "1791803040000": [
+            {
+              "i": "324d81c5-3dd6-5737-8e7b-b4386dc400e9",
+              "c": "c3",
+              "u": 0,
+              "d": 30000
+            },
+            {
+              "i": "4d5ce81b-16ab-5f47-872d-80e695668eba",
+              "c": "c6",
+              "u": 1,
+              "d": 30000
+            }
+          ]
+        },
+        "emergency": [],
+        "revoked": [
+          "cd260b91-d941-55cb-999a-3e4e2760e984"
+        ]
+      },
+      "anchor_ms": 1791802800000,
+      "local_state": {
+        "revoked": [
+          "80a6edac-6968-5472-bad3-c7fc7f08de21"
+        ],
+        "media_ready": [
+          "m1",
+          "m2",
+          "m4",
+          "m5",
+          "m6",
+          "m7",
+          "m8",
+          "m9"
+        ]
+      },
+      "queries": [
+        {
+          "t_ms": 1791802921000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "f1",
+            "start_ms": 1791802920000,
+            "end_ms": 1791802950000
+          }
+        },
+        {
+          "t_ms": 1791802951000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "FILLER",
+            "creative_key": "f2",
+            "start_ms": 1791802950000,
+            "end_ms": 1791802980000
+          }
+        },
+        {
+          "t_ms": 1791802981000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "f1",
+            "start_ms": 1791802980000,
+            "end_ms": 1791803010000
+          }
+        },
+        {
+          "t_ms": 1791803011000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "FILLER",
+            "creative_key": "f2",
+            "start_ms": 1791803010000,
+            "end_ms": 1791803040000
+          }
+        },
+        {
+          "t_ms": 1791803165000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "f1",
+            "start_ms": 1791803160000,
+            "end_ms": 1791803190000
+          }
+        },
+        {
+          "t_ms": 1791803195000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c6",
+            "start_ms": 1791803190000,
+            "end_ms": 1791803220000
+          }
+        },
+        {
+          "t_ms": 1791803225000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "f1",
+            "start_ms": 1791803220000,
+            "end_ms": 1791803250000
+          }
+        }
+      ],
+      "note": "c2 revogado no manifesto, c4 revogado localmente (kill), mídia m3 ausente"
+    },
+    {
+      "name": "emergencia",
+      "manifest": {
+        "schema": "rd.manifest/1",
+        "manifest_id": "8f49e140-90c3-5d42-86da-290db7766943",
+        "version": 42,
+        "screen_id": "a2fd3775-306c-58d1-951a-5ae23a24ac6d",
+        "screen_code": "TEL-GO-7Q3M",
+        "generated_at_ms": 1791799200000,
+        "timezone": "America/Sao_Paulo",
+        "rotation": {
+          "internal_ms": 120000,
+          "external_ms": 120000,
+          "cycle_ms": 240000,
+          "unit_ms": 30000,
+          "policy_id": "83e5e6e2-0267-5928-b92a-fa525d51e384"
+        },
+        "anchor_ms": 1791802800000,
+        "horizon": {
+          "from_ms": 1791716400000,
+          "to_ms": 1792321200000,
+          "repeat_period_ms": 604800000
+        },
+        "settings": {
+          "image_default_ms": 30000,
+          "fade_ms": 400,
+          "orientation": "LANDSCAPE",
+          "footer": {
+            "enabled": true,
+            "height_permille": 60
+          },
+          "offline_alert_days": [
+            7,
+            28
+          ],
+          "heartbeat_interval_ms": 30000,
+          "telemetry_interval_ms": 300000,
+          "panel_url": "https://painel.exemplo.test"
+        },
+        "media": {
+          "m1": {
+            "media_id": "1cef28a3-4137-5443-a891-f45adfc76a6d",
+            "sha256": "472bec8bbe29a574a4d5794d1c8cb21fc4b819d3b189734ffcb62fc00035a384",
+            "size": 1000001,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m2": {
+            "media_id": "940ef36f-929d-5a6a-b962-578102819d51",
+            "sha256": "53314b32180d9400067915303537e91b40f13f8a0c4fc6f81c0bca8547fa969c",
+            "size": 1000002,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m3": {
+            "media_id": "ba09b9dd-8e2b-5a8b-9914-facc5107a45d",
+            "sha256": "04f06a5c0367b40817539972cd0d96ba392c486e36207857938319cc2c284724",
+            "size": 1000003,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m4": {
+            "media_id": "da439163-df79-59c5-8894-9cd0a71eeed6",
+            "sha256": "4921e501ce77ce2ca4269a40747629db102c8eb851ae3be10cf4ec48c07bc798",
+            "size": 1000004,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m5": {
+            "media_id": "9efc2b39-244a-5ed2-bf05-103c59a1505b",
+            "sha256": "0b9f41ed8ec3455ac94ee7f26b5854bf48a85b0286b1778d46222af3172e1ea9",
+            "size": 1000005,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m6": {
+            "media_id": "5eafb9a9-629a-59d6-b4d3-d00b03224119",
+            "sha256": "685885460b8873fb5ebfcef65de9b0aef41f68355d73a1148c499ecd11403277",
+            "size": 1000006,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m7": {
+            "media_id": "760a609e-79ce-5072-b54b-4a0b58ec2ca6",
+            "sha256": "23c87fc766bca4bcb22c0a55e4037736423c0ee60c0e175c6a04306f9169c61d",
+            "size": 1000007,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": null
+          },
+          "m8": {
+            "media_id": "b5dac854-c524-50fc-bc71-18fb78b14040",
+            "sha256": "a607b7689ec517a496d0e14b1275d3ec0c492d3ddb8f4547d7f71c42282a0468",
+            "size": 1000008,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m9": {
+            "media_id": "d5e51605-f7de-5c3e-8a0f-41e460b1964b",
+            "sha256": "20347c6a6a03dfecdcb0b4b6202d706e8566fa5ea8456ce9b3c2f2f2f02481a8",
+            "size": 1000009,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          }
+        },
+        "creatives": {
+          "c1": {
+            "creative_id": "49fd9ed8-3e41-5cff-8784-70f7f5648d87",
+            "code": "RD-A7M2P9",
+            "kind": "EXTERNAL",
+            "campaign_id": "4007d10d-00df-51cf-96ac-27bcd84c9662",
+            "advertiser_id": "eace7257-21ad-5529-89ac-3cdb14aacbf4",
+            "media": "m1",
+            "duration_ms": 120000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c2": {
+            "creative_id": "cd260b91-d941-55cb-999a-3e4e2760e984",
+            "code": "RD-B3C4D5",
+            "kind": "EXTERNAL",
+            "campaign_id": "1781708b-5e0a-597c-8bc9-3d5b4f96e508",
+            "advertiser_id": "fc008390-3cb7-5679-b7e9-6fd23a80c259",
+            "media": "m2",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c3": {
+            "creative_id": "6b376c82-0a45-541c-a226-d4cd76543fdb",
+            "code": "RD-E6F7G8",
+            "kind": "EXTERNAL",
+            "campaign_id": "54dcf3fe-02ce-5f94-a24c-1b1ff190713d",
+            "advertiser_id": "619232fc-bd26-5140-9196-7d4acdeff81d",
+            "media": "m3",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c4": {
+            "creative_id": "80a6edac-6968-5472-bad3-c7fc7f08de21",
+            "code": "RD-H9J2M3",
+            "kind": "EXTERNAL",
+            "campaign_id": "0806561e-70ae-5f28-a0e8-e353a4059a49",
+            "advertiser_id": "48bf49fa-5106-5b28-8464-041468f15584",
+            "media": "m4",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c5": {
+            "creative_id": "94a3d9e1-573b-5921-bf1d-d4dcee3ad46b",
+            "code": "RD-N4P5Q6",
+            "kind": "EXTERNAL",
+            "campaign_id": "78c5a9f5-9027-5f80-8c3a-2159fb3e08e9",
+            "advertiser_id": "8b7cfec8-0f65-5340-8f19-864a472780cf",
+            "media": "m5",
+            "duration_ms": 30000,
+            "valid_from_ms": 1791802800000,
+            "valid_until_ms": 1791803280000,
+            "label": "Publicidade"
+          },
+          "c6": {
+            "creative_id": "1a0104c8-65ce-5622-8717-a2b4789e5bcf",
+            "code": "RD-U2V3Y4",
+            "kind": "INSTITUTIONAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m6",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c7": {
+            "creative_id": "0e193bb4-b8ac-554c-bea2-9f40d4b4d6f9",
+            "code": "RD-R7S8T9",
+            "kind": "INTERNAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m7",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Conteúdo do estabelecimento"
+          },
+          "c8": {
+            "creative_id": "26c29682-710d-5a47-b805-76e4790ac53c",
+            "code": "RD-Z5A6B7",
+            "kind": "INTERNAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m8",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Conteúdo do estabelecimento"
+          },
+          "f1": {
+            "creative_id": "4a412bca-e735-5c60-9c06-4254fdddfb3a",
+            "code": "RD-F2A3B4",
+            "kind": "FALLBACK",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m9",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "RD Mídia Indoor"
+          },
+          "f2": {
+            "creative_id": "1701fa34-df19-5af7-8306-f8482c9a8ddb",
+            "code": "RD-G5H6J7",
+            "kind": "FALLBACK",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m9",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "RD Mídia Indoor"
+          }
+        },
+        "internal_pattern": [
+          [
+            {
+              "c": "c7",
+              "d": 60000
+            },
+            {
+              "c": "c8",
+              "d": 60000
+            }
+          ],
+          [
+            {
+              "c": "c8",
+              "d": 60000
+            },
+            {
+              "c": "c7",
+              "d": 60000
+            }
+          ]
+        ],
+        "fallback": [
+          {
+            "c": "f1",
+            "d": 30000
+          },
+          {
+            "c": "f2",
+            "d": 60000
+          }
+        ],
+        "external_plan": {
+          "1791802800000": [
+            {
+              "i": "91af9dbb-dc14-5b5b-a549-908c6e06488e",
+              "c": "c1",
+              "u": 0,
+              "d": 120000
+            }
+          ]
+        },
+        "emergency": [
+          {
+            "id": "7c5fb46e-fdc7-55a1-8fd6-6614139dc972",
+            "c": "c6",
+            "from_ms": 1791802850000,
+            "until_ms": 1791802950000
+          },
+          {
+            "id": "eba13c9b-9ccd-5e41-9fd6-06dc63726fdb",
+            "c": "c3",
+            "from_ms": 1791802850000,
+            "until_ms": 1791803250000
+          }
+        ],
+        "revoked": []
+      },
+      "anchor_ms": 1791802800000,
+      "local_state": {
+        "revoked": [],
+        "media_ready": [
+          "m1",
+          "m2",
+          "m3",
+          "m4",
+          "m5",
+          "m6",
+          "m7",
+          "m8",
+          "m9"
+        ]
+      },
+      "queries": [
+        {
+          "t_ms": 1791802849999,
+          "expected": {
+            "block": "INTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c7",
+            "start_ms": 1791802800000,
+            "end_ms": 1791802860000
+          }
+        },
+        {
+          "t_ms": 1791802850000,
+          "expected": {
+            "block": "EMERGENCY",
+            "kind": "ITEM",
+            "creative_key": "c6",
+            "start_ms": 1791802850000,
+            "end_ms": 1791802880000
+          }
+        },
+        {
+          "t_ms": 1791802879999,
+          "expected": {
+            "block": "EMERGENCY",
+            "kind": "ITEM",
+            "creative_key": "c6",
+            "start_ms": 1791802850000,
+            "end_ms": 1791802880000
+          }
+        },
+        {
+          "t_ms": 1791802880000,
+          "expected": {
+            "block": "EMERGENCY",
+            "kind": "ITEM",
+            "creative_key": "c6",
+            "start_ms": 1791802880000,
+            "end_ms": 1791802910000
+          }
+        },
+        {
+          "t_ms": 1791802945000,
+          "expected": {
+            "block": "EMERGENCY",
+            "kind": "FILLER",
+            "creative_key": "c6",
+            "start_ms": 1791802940000,
+            "end_ms": 1791802950000
+          }
+        },
+        {
+          "t_ms": 1791802949999,
+          "expected": {
+            "block": "EMERGENCY",
+            "kind": "FILLER",
+            "creative_key": "c6",
+            "start_ms": 1791802940000,
+            "end_ms": 1791802950000
+          }
+        },
+        {
+          "t_ms": 1791802950000,
+          "expected": {
+            "block": "EMERGENCY",
+            "kind": "ITEM",
+            "creative_key": "c3",
+            "start_ms": 1791802940000,
+            "end_ms": 1791802970000
+          }
+        },
+        {
+          "t_ms": 1791803050000,
+          "expected": {
+            "block": "EMERGENCY",
+            "kind": "ITEM",
+            "creative_key": "c3",
+            "start_ms": 1791803030000,
+            "end_ms": 1791803060000
+          }
+        },
+        {
+          "t_ms": 1791803250000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "f1",
+            "start_ms": 1791803250000,
+            "end_ms": 1791803280000
+          }
+        }
+      ]
+    },
+    {
+      "name": "fallback_vazio_e_interno_vazio",
+      "manifest": {
+        "schema": "rd.manifest/1",
+        "manifest_id": "8f49e140-90c3-5d42-86da-290db7766943",
+        "version": 42,
+        "screen_id": "a2fd3775-306c-58d1-951a-5ae23a24ac6d",
+        "screen_code": "TEL-GO-7Q3M",
+        "generated_at_ms": 1791799200000,
+        "timezone": "America/Sao_Paulo",
+        "rotation": {
+          "internal_ms": 120000,
+          "external_ms": 120000,
+          "cycle_ms": 240000,
+          "unit_ms": 30000,
+          "policy_id": "83e5e6e2-0267-5928-b92a-fa525d51e384"
+        },
+        "anchor_ms": 1791802800000,
+        "horizon": {
+          "from_ms": 1791716400000,
+          "to_ms": 1792321200000,
+          "repeat_period_ms": 604800000
+        },
+        "settings": {
+          "image_default_ms": 30000,
+          "fade_ms": 400,
+          "orientation": "LANDSCAPE",
+          "footer": {
+            "enabled": true,
+            "height_permille": 60
+          },
+          "offline_alert_days": [
+            7,
+            28
+          ],
+          "heartbeat_interval_ms": 30000,
+          "telemetry_interval_ms": 300000,
+          "panel_url": "https://painel.exemplo.test"
+        },
+        "media": {
+          "m1": {
+            "media_id": "1cef28a3-4137-5443-a891-f45adfc76a6d",
+            "sha256": "472bec8bbe29a574a4d5794d1c8cb21fc4b819d3b189734ffcb62fc00035a384",
+            "size": 1000001,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m2": {
+            "media_id": "940ef36f-929d-5a6a-b962-578102819d51",
+            "sha256": "53314b32180d9400067915303537e91b40f13f8a0c4fc6f81c0bca8547fa969c",
+            "size": 1000002,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m3": {
+            "media_id": "ba09b9dd-8e2b-5a8b-9914-facc5107a45d",
+            "sha256": "04f06a5c0367b40817539972cd0d96ba392c486e36207857938319cc2c284724",
+            "size": 1000003,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m4": {
+            "media_id": "da439163-df79-59c5-8894-9cd0a71eeed6",
+            "sha256": "4921e501ce77ce2ca4269a40747629db102c8eb851ae3be10cf4ec48c07bc798",
+            "size": 1000004,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m5": {
+            "media_id": "9efc2b39-244a-5ed2-bf05-103c59a1505b",
+            "sha256": "0b9f41ed8ec3455ac94ee7f26b5854bf48a85b0286b1778d46222af3172e1ea9",
+            "size": 1000005,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m6": {
+            "media_id": "5eafb9a9-629a-59d6-b4d3-d00b03224119",
+            "sha256": "685885460b8873fb5ebfcef65de9b0aef41f68355d73a1148c499ecd11403277",
+            "size": 1000006,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m7": {
+            "media_id": "760a609e-79ce-5072-b54b-4a0b58ec2ca6",
+            "sha256": "23c87fc766bca4bcb22c0a55e4037736423c0ee60c0e175c6a04306f9169c61d",
+            "size": 1000007,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": null
+          },
+          "m8": {
+            "media_id": "b5dac854-c524-50fc-bc71-18fb78b14040",
+            "sha256": "a607b7689ec517a496d0e14b1275d3ec0c492d3ddb8f4547d7f71c42282a0468",
+            "size": 1000008,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m9": {
+            "media_id": "d5e51605-f7de-5c3e-8a0f-41e460b1964b",
+            "sha256": "20347c6a6a03dfecdcb0b4b6202d706e8566fa5ea8456ce9b3c2f2f2f02481a8",
+            "size": 1000009,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          }
+        },
+        "creatives": {
+          "c1": {
+            "creative_id": "49fd9ed8-3e41-5cff-8784-70f7f5648d87",
+            "code": "RD-A7M2P9",
+            "kind": "EXTERNAL",
+            "campaign_id": "4007d10d-00df-51cf-96ac-27bcd84c9662",
+            "advertiser_id": "eace7257-21ad-5529-89ac-3cdb14aacbf4",
+            "media": "m1",
+            "duration_ms": 120000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c2": {
+            "creative_id": "cd260b91-d941-55cb-999a-3e4e2760e984",
+            "code": "RD-B3C4D5",
+            "kind": "EXTERNAL",
+            "campaign_id": "1781708b-5e0a-597c-8bc9-3d5b4f96e508",
+            "advertiser_id": "fc008390-3cb7-5679-b7e9-6fd23a80c259",
+            "media": "m2",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c3": {
+            "creative_id": "6b376c82-0a45-541c-a226-d4cd76543fdb",
+            "code": "RD-E6F7G8",
+            "kind": "EXTERNAL",
+            "campaign_id": "54dcf3fe-02ce-5f94-a24c-1b1ff190713d",
+            "advertiser_id": "619232fc-bd26-5140-9196-7d4acdeff81d",
+            "media": "m3",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c4": {
+            "creative_id": "80a6edac-6968-5472-bad3-c7fc7f08de21",
+            "code": "RD-H9J2M3",
+            "kind": "EXTERNAL",
+            "campaign_id": "0806561e-70ae-5f28-a0e8-e353a4059a49",
+            "advertiser_id": "48bf49fa-5106-5b28-8464-041468f15584",
+            "media": "m4",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c5": {
+            "creative_id": "94a3d9e1-573b-5921-bf1d-d4dcee3ad46b",
+            "code": "RD-N4P5Q6",
+            "kind": "EXTERNAL",
+            "campaign_id": "78c5a9f5-9027-5f80-8c3a-2159fb3e08e9",
+            "advertiser_id": "8b7cfec8-0f65-5340-8f19-864a472780cf",
+            "media": "m5",
+            "duration_ms": 30000,
+            "valid_from_ms": 1791802800000,
+            "valid_until_ms": 1791803280000,
+            "label": "Publicidade"
+          },
+          "c6": {
+            "creative_id": "1a0104c8-65ce-5622-8717-a2b4789e5bcf",
+            "code": "RD-U2V3Y4",
+            "kind": "INSTITUTIONAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m6",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c7": {
+            "creative_id": "0e193bb4-b8ac-554c-bea2-9f40d4b4d6f9",
+            "code": "RD-R7S8T9",
+            "kind": "INTERNAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m7",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Conteúdo do estabelecimento"
+          },
+          "c8": {
+            "creative_id": "26c29682-710d-5a47-b805-76e4790ac53c",
+            "code": "RD-Z5A6B7",
+            "kind": "INTERNAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m8",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Conteúdo do estabelecimento"
+          },
+          "f1": {
+            "creative_id": "4a412bca-e735-5c60-9c06-4254fdddfb3a",
+            "code": "RD-F2A3B4",
+            "kind": "FALLBACK",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m9",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "RD Mídia Indoor"
+          },
+          "f2": {
+            "creative_id": "1701fa34-df19-5af7-8306-f8482c9a8ddb",
+            "code": "RD-G5H6J7",
+            "kind": "FALLBACK",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m9",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "RD Mídia Indoor"
+          }
+        },
+        "internal_pattern": [],
+        "fallback": [],
+        "external_plan": {},
+        "emergency": [],
+        "revoked": []
+      },
+      "anchor_ms": 1791802800000,
+      "local_state": {
+        "revoked": [],
+        "media_ready": [
+          "m1",
+          "m2",
+          "m3",
+          "m4",
+          "m5",
+          "m6",
+          "m7",
+          "m8",
+          "m9"
+        ]
+      },
+      "queries": [
+        {
+          "t_ms": 1791802800000,
+          "expected": {
+            "block": "INTERNAL",
+            "kind": "FILLER",
+            "creative_key": null,
+            "start_ms": 1791802800000,
+            "end_ms": 1791802920000
+          }
+        },
+        {
+          "t_ms": 1791802930000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "FILLER",
+            "creative_key": null,
+            "start_ms": 1791802920000,
+            "end_ms": 1791803040000
+          }
+        }
+      ]
+    },
+    {
+      "name": "interno_vazio_preenche_com_fallback",
+      "manifest": {
+        "schema": "rd.manifest/1",
+        "manifest_id": "8f49e140-90c3-5d42-86da-290db7766943",
+        "version": 42,
+        "screen_id": "a2fd3775-306c-58d1-951a-5ae23a24ac6d",
+        "screen_code": "TEL-GO-7Q3M",
+        "generated_at_ms": 1791799200000,
+        "timezone": "America/Sao_Paulo",
+        "rotation": {
+          "internal_ms": 120000,
+          "external_ms": 120000,
+          "cycle_ms": 240000,
+          "unit_ms": 30000,
+          "policy_id": "83e5e6e2-0267-5928-b92a-fa525d51e384"
+        },
+        "anchor_ms": 1791802800000,
+        "horizon": {
+          "from_ms": 1791716400000,
+          "to_ms": 1792321200000,
+          "repeat_period_ms": 604800000
+        },
+        "settings": {
+          "image_default_ms": 30000,
+          "fade_ms": 400,
+          "orientation": "LANDSCAPE",
+          "footer": {
+            "enabled": true,
+            "height_permille": 60
+          },
+          "offline_alert_days": [
+            7,
+            28
+          ],
+          "heartbeat_interval_ms": 30000,
+          "telemetry_interval_ms": 300000,
+          "panel_url": "https://painel.exemplo.test"
+        },
+        "media": {
+          "m1": {
+            "media_id": "1cef28a3-4137-5443-a891-f45adfc76a6d",
+            "sha256": "472bec8bbe29a574a4d5794d1c8cb21fc4b819d3b189734ffcb62fc00035a384",
+            "size": 1000001,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m2": {
+            "media_id": "940ef36f-929d-5a6a-b962-578102819d51",
+            "sha256": "53314b32180d9400067915303537e91b40f13f8a0c4fc6f81c0bca8547fa969c",
+            "size": 1000002,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m3": {
+            "media_id": "ba09b9dd-8e2b-5a8b-9914-facc5107a45d",
+            "sha256": "04f06a5c0367b40817539972cd0d96ba392c486e36207857938319cc2c284724",
+            "size": 1000003,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m4": {
+            "media_id": "da439163-df79-59c5-8894-9cd0a71eeed6",
+            "sha256": "4921e501ce77ce2ca4269a40747629db102c8eb851ae3be10cf4ec48c07bc798",
+            "size": 1000004,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m5": {
+            "media_id": "9efc2b39-244a-5ed2-bf05-103c59a1505b",
+            "sha256": "0b9f41ed8ec3455ac94ee7f26b5854bf48a85b0286b1778d46222af3172e1ea9",
+            "size": 1000005,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m6": {
+            "media_id": "5eafb9a9-629a-59d6-b4d3-d00b03224119",
+            "sha256": "685885460b8873fb5ebfcef65de9b0aef41f68355d73a1148c499ecd11403277",
+            "size": 1000006,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m7": {
+            "media_id": "760a609e-79ce-5072-b54b-4a0b58ec2ca6",
+            "sha256": "23c87fc766bca4bcb22c0a55e4037736423c0ee60c0e175c6a04306f9169c61d",
+            "size": 1000007,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": null
+          },
+          "m8": {
+            "media_id": "b5dac854-c524-50fc-bc71-18fb78b14040",
+            "sha256": "a607b7689ec517a496d0e14b1275d3ec0c492d3ddb8f4547d7f71c42282a0468",
+            "size": 1000008,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m9": {
+            "media_id": "d5e51605-f7de-5c3e-8a0f-41e460b1964b",
+            "sha256": "20347c6a6a03dfecdcb0b4b6202d706e8566fa5ea8456ce9b3c2f2f2f02481a8",
+            "size": 1000009,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          }
+        },
+        "creatives": {
+          "c1": {
+            "creative_id": "49fd9ed8-3e41-5cff-8784-70f7f5648d87",
+            "code": "RD-A7M2P9",
+            "kind": "EXTERNAL",
+            "campaign_id": "4007d10d-00df-51cf-96ac-27bcd84c9662",
+            "advertiser_id": "eace7257-21ad-5529-89ac-3cdb14aacbf4",
+            "media": "m1",
+            "duration_ms": 120000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c2": {
+            "creative_id": "cd260b91-d941-55cb-999a-3e4e2760e984",
+            "code": "RD-B3C4D5",
+            "kind": "EXTERNAL",
+            "campaign_id": "1781708b-5e0a-597c-8bc9-3d5b4f96e508",
+            "advertiser_id": "fc008390-3cb7-5679-b7e9-6fd23a80c259",
+            "media": "m2",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c3": {
+            "creative_id": "6b376c82-0a45-541c-a226-d4cd76543fdb",
+            "code": "RD-E6F7G8",
+            "kind": "EXTERNAL",
+            "campaign_id": "54dcf3fe-02ce-5f94-a24c-1b1ff190713d",
+            "advertiser_id": "619232fc-bd26-5140-9196-7d4acdeff81d",
+            "media": "m3",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c4": {
+            "creative_id": "80a6edac-6968-5472-bad3-c7fc7f08de21",
+            "code": "RD-H9J2M3",
+            "kind": "EXTERNAL",
+            "campaign_id": "0806561e-70ae-5f28-a0e8-e353a4059a49",
+            "advertiser_id": "48bf49fa-5106-5b28-8464-041468f15584",
+            "media": "m4",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c5": {
+            "creative_id": "94a3d9e1-573b-5921-bf1d-d4dcee3ad46b",
+            "code": "RD-N4P5Q6",
+            "kind": "EXTERNAL",
+            "campaign_id": "78c5a9f5-9027-5f80-8c3a-2159fb3e08e9",
+            "advertiser_id": "8b7cfec8-0f65-5340-8f19-864a472780cf",
+            "media": "m5",
+            "duration_ms": 30000,
+            "valid_from_ms": 1791802800000,
+            "valid_until_ms": 1791803280000,
+            "label": "Publicidade"
+          },
+          "c6": {
+            "creative_id": "1a0104c8-65ce-5622-8717-a2b4789e5bcf",
+            "code": "RD-U2V3Y4",
+            "kind": "INSTITUTIONAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m6",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c7": {
+            "creative_id": "0e193bb4-b8ac-554c-bea2-9f40d4b4d6f9",
+            "code": "RD-R7S8T9",
+            "kind": "INTERNAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m7",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Conteúdo do estabelecimento"
+          },
+          "c8": {
+            "creative_id": "26c29682-710d-5a47-b805-76e4790ac53c",
+            "code": "RD-Z5A6B7",
+            "kind": "INTERNAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m8",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Conteúdo do estabelecimento"
+          },
+          "f1": {
+            "creative_id": "4a412bca-e735-5c60-9c06-4254fdddfb3a",
+            "code": "RD-F2A3B4",
+            "kind": "FALLBACK",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m9",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "RD Mídia Indoor"
+          },
+          "f2": {
+            "creative_id": "1701fa34-df19-5af7-8306-f8482c9a8ddb",
+            "code": "RD-G5H6J7",
+            "kind": "FALLBACK",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m9",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "RD Mídia Indoor"
+          }
+        },
+        "internal_pattern": [],
+        "fallback": [
+          {
+            "c": "f1",
+            "d": 30000
+          },
+          {
+            "c": "f2",
+            "d": 60000
+          }
+        ],
+        "external_plan": {},
+        "emergency": [],
+        "revoked": []
+      },
+      "anchor_ms": 1791802800000,
+      "local_state": {
+        "revoked": [],
+        "media_ready": [
+          "m1",
+          "m2",
+          "m3",
+          "m4",
+          "m5",
+          "m6",
+          "m7",
+          "m8",
+          "m9"
+        ]
+      },
+      "queries": [
+        {
+          "t_ms": 1791802800000,
+          "expected": {
+            "block": "INTERNAL",
+            "kind": "ITEM",
+            "creative_key": "f1",
+            "start_ms": 1791802800000,
+            "end_ms": 1791802830000
+          }
+        },
+        {
+          "t_ms": 1791802830000,
+          "expected": {
+            "block": "INTERNAL",
+            "kind": "ITEM",
+            "creative_key": "f2",
+            "start_ms": 1791802830000,
+            "end_ms": 1791802890000
+          }
+        },
+        {
+          "t_ms": 1791802860000,
+          "expected": {
+            "block": "INTERNAL",
+            "kind": "ITEM",
+            "creative_key": "f2",
+            "start_ms": 1791802830000,
+            "end_ms": 1791802890000
+          }
+        },
+        {
+          "t_ms": 1791802890000,
+          "expected": {
+            "block": "INTERNAL",
+            "kind": "ITEM",
+            "creative_key": "f1",
+            "start_ms": 1791802890000,
+            "end_ms": 1791802920000
+          }
+        },
+        {
+          "t_ms": 1791802919999,
+          "expected": {
+            "block": "INTERNAL",
+            "kind": "ITEM",
+            "creative_key": "f1",
+            "start_ms": 1791802890000,
+            "end_ms": 1791802920000
+          }
+        }
+      ]
+    },
+    {
+      "name": "entradas_sobrepostas_e_extrapolando",
+      "manifest": {
+        "schema": "rd.manifest/1",
+        "manifest_id": "8f49e140-90c3-5d42-86da-290db7766943",
+        "version": 42,
+        "screen_id": "a2fd3775-306c-58d1-951a-5ae23a24ac6d",
+        "screen_code": "TEL-GO-7Q3M",
+        "generated_at_ms": 1791799200000,
+        "timezone": "America/Sao_Paulo",
+        "rotation": {
+          "internal_ms": 120000,
+          "external_ms": 120000,
+          "cycle_ms": 240000,
+          "unit_ms": 30000,
+          "policy_id": "83e5e6e2-0267-5928-b92a-fa525d51e384"
+        },
+        "anchor_ms": 1791802800000,
+        "horizon": {
+          "from_ms": 1791716400000,
+          "to_ms": 1792321200000,
+          "repeat_period_ms": 604800000
+        },
+        "settings": {
+          "image_default_ms": 30000,
+          "fade_ms": 400,
+          "orientation": "LANDSCAPE",
+          "footer": {
+            "enabled": true,
+            "height_permille": 60
+          },
+          "offline_alert_days": [
+            7,
+            28
+          ],
+          "heartbeat_interval_ms": 30000,
+          "telemetry_interval_ms": 300000,
+          "panel_url": "https://painel.exemplo.test"
+        },
+        "media": {
+          "m1": {
+            "media_id": "1cef28a3-4137-5443-a891-f45adfc76a6d",
+            "sha256": "472bec8bbe29a574a4d5794d1c8cb21fc4b819d3b189734ffcb62fc00035a384",
+            "size": 1000001,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m2": {
+            "media_id": "940ef36f-929d-5a6a-b962-578102819d51",
+            "sha256": "53314b32180d9400067915303537e91b40f13f8a0c4fc6f81c0bca8547fa969c",
+            "size": 1000002,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m3": {
+            "media_id": "ba09b9dd-8e2b-5a8b-9914-facc5107a45d",
+            "sha256": "04f06a5c0367b40817539972cd0d96ba392c486e36207857938319cc2c284724",
+            "size": 1000003,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m4": {
+            "media_id": "da439163-df79-59c5-8894-9cd0a71eeed6",
+            "sha256": "4921e501ce77ce2ca4269a40747629db102c8eb851ae3be10cf4ec48c07bc798",
+            "size": 1000004,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m5": {
+            "media_id": "9efc2b39-244a-5ed2-bf05-103c59a1505b",
+            "sha256": "0b9f41ed8ec3455ac94ee7f26b5854bf48a85b0286b1778d46222af3172e1ea9",
+            "size": 1000005,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m6": {
+            "media_id": "5eafb9a9-629a-59d6-b4d3-d00b03224119",
+            "sha256": "685885460b8873fb5ebfcef65de9b0aef41f68355d73a1148c499ecd11403277",
+            "size": 1000006,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m7": {
+            "media_id": "760a609e-79ce-5072-b54b-4a0b58ec2ca6",
+            "sha256": "23c87fc766bca4bcb22c0a55e4037736423c0ee60c0e175c6a04306f9169c61d",
+            "size": 1000007,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": null
+          },
+          "m8": {
+            "media_id": "b5dac854-c524-50fc-bc71-18fb78b14040",
+            "sha256": "a607b7689ec517a496d0e14b1275d3ec0c492d3ddb8f4547d7f71c42282a0468",
+            "size": 1000008,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          },
+          "m9": {
+            "media_id": "d5e51605-f7de-5c3e-8a0f-41e460b1964b",
+            "sha256": "20347c6a6a03dfecdcb0b4b6202d706e8566fa5ea8456ce9b3c2f2f2f02481a8",
+            "size": 1000009,
+            "mime": "video/mp4",
+            "width": 1920,
+            "height": 1080,
+            "duration_ms": 30000
+          }
+        },
+        "creatives": {
+          "c1": {
+            "creative_id": "49fd9ed8-3e41-5cff-8784-70f7f5648d87",
+            "code": "RD-A7M2P9",
+            "kind": "EXTERNAL",
+            "campaign_id": "4007d10d-00df-51cf-96ac-27bcd84c9662",
+            "advertiser_id": "eace7257-21ad-5529-89ac-3cdb14aacbf4",
+            "media": "m1",
+            "duration_ms": 120000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c2": {
+            "creative_id": "cd260b91-d941-55cb-999a-3e4e2760e984",
+            "code": "RD-B3C4D5",
+            "kind": "EXTERNAL",
+            "campaign_id": "1781708b-5e0a-597c-8bc9-3d5b4f96e508",
+            "advertiser_id": "fc008390-3cb7-5679-b7e9-6fd23a80c259",
+            "media": "m2",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c3": {
+            "creative_id": "6b376c82-0a45-541c-a226-d4cd76543fdb",
+            "code": "RD-E6F7G8",
+            "kind": "EXTERNAL",
+            "campaign_id": "54dcf3fe-02ce-5f94-a24c-1b1ff190713d",
+            "advertiser_id": "619232fc-bd26-5140-9196-7d4acdeff81d",
+            "media": "m3",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c4": {
+            "creative_id": "80a6edac-6968-5472-bad3-c7fc7f08de21",
+            "code": "RD-H9J2M3",
+            "kind": "EXTERNAL",
+            "campaign_id": "0806561e-70ae-5f28-a0e8-e353a4059a49",
+            "advertiser_id": "48bf49fa-5106-5b28-8464-041468f15584",
+            "media": "m4",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c5": {
+            "creative_id": "94a3d9e1-573b-5921-bf1d-d4dcee3ad46b",
+            "code": "RD-N4P5Q6",
+            "kind": "EXTERNAL",
+            "campaign_id": "78c5a9f5-9027-5f80-8c3a-2159fb3e08e9",
+            "advertiser_id": "8b7cfec8-0f65-5340-8f19-864a472780cf",
+            "media": "m5",
+            "duration_ms": 30000,
+            "valid_from_ms": 1791802800000,
+            "valid_until_ms": 1791803280000,
+            "label": "Publicidade"
+          },
+          "c6": {
+            "creative_id": "1a0104c8-65ce-5622-8717-a2b4789e5bcf",
+            "code": "RD-U2V3Y4",
+            "kind": "INSTITUTIONAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m6",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Publicidade"
+          },
+          "c7": {
+            "creative_id": "0e193bb4-b8ac-554c-bea2-9f40d4b4d6f9",
+            "code": "RD-R7S8T9",
+            "kind": "INTERNAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m7",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Conteúdo do estabelecimento"
+          },
+          "c8": {
+            "creative_id": "26c29682-710d-5a47-b805-76e4790ac53c",
+            "code": "RD-Z5A6B7",
+            "kind": "INTERNAL",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m8",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "Conteúdo do estabelecimento"
+          },
+          "f1": {
+            "creative_id": "4a412bca-e735-5c60-9c06-4254fdddfb3a",
+            "code": "RD-F2A3B4",
+            "kind": "FALLBACK",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m9",
+            "duration_ms": 30000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "RD Mídia Indoor"
+          },
+          "f2": {
+            "creative_id": "1701fa34-df19-5af7-8306-f8482c9a8ddb",
+            "code": "RD-G5H6J7",
+            "kind": "FALLBACK",
+            "campaign_id": null,
+            "advertiser_id": null,
+            "media": "m9",
+            "duration_ms": 60000,
+            "valid_from_ms": 0,
+            "valid_until_ms": 253402300799999,
+            "label": "RD Mídia Indoor"
+          }
+        },
+        "internal_pattern": [
+          [
+            {
+              "c": "c7",
+              "d": 60000
+            },
+            {
+              "c": "c1",
+              "d": 120000
+            }
+          ]
+        ],
+        "fallback": [
+          {
+            "c": "f1",
+            "d": 30000
+          },
+          {
+            "c": "f2",
+            "d": 60000
+          }
+        ],
+        "external_plan": {
+          "1791802800000": [
+            {
+              "i": "91af9dbb-dc14-5b5b-a549-908c6e06488e",
+              "c": "c2",
+              "u": 0,
+              "d": 60000
+            },
+            {
+              "i": "8629dd01-f78b-5481-bfd6-f0fe0f480c7a",
+              "c": "c4",
+              "u": 1,
+              "d": 60000
+            },
+            {
+              "i": "0eb15d76-441e-52bf-8639-a95754c37ead",
+              "c": "c3",
+              "u": 3,
+              "d": 60000
+            },
+            {
+              "i": "dd730dde-e28e-5bef-a69c-c40eddcefc63",
+              "c": "c6",
+              "u": 4,
+              "d": 30000
+            }
+          ]
+        },
+        "emergency": [],
+        "revoked": []
+      },
+      "anchor_ms": 1791802800000,
+      "local_state": {
+        "revoked": [],
+        "media_ready": [
+          "m1",
+          "m2",
+          "m3",
+          "m4",
+          "m5",
+          "m6",
+          "m7",
+          "m8",
+          "m9"
+        ]
+      },
+      "queries": [
+        {
+          "t_ms": 1791802810000,
+          "expected": {
+            "block": "INTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c7",
+            "start_ms": 1791802800000,
+            "end_ms": 1791802860000
+          }
+        },
+        {
+          "t_ms": 1791802860000,
+          "expected": {
+            "block": "INTERNAL",
+            "kind": "ITEM",
+            "creative_key": "f1",
+            "start_ms": 1791802860000,
+            "end_ms": 1791802890000
+          }
+        },
+        {
+          "t_ms": 1791802890000,
+          "expected": {
+            "block": "INTERNAL",
+            "kind": "FILLER",
+            "creative_key": "f2",
+            "start_ms": 1791802890000,
+            "end_ms": 1791802920000
+          }
+        },
+        {
+          "t_ms": 1791802930000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "c2",
+            "start_ms": 1791802920000,
+            "end_ms": 1791802980000
+          }
+        },
+        {
+          "t_ms": 1791802980000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "f1",
+            "start_ms": 1791802980000,
+            "end_ms": 1791803010000
+          }
+        },
+        {
+          "t_ms": 1791802990000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "ITEM",
+            "creative_key": "f1",
+            "start_ms": 1791802980000,
+            "end_ms": 1791803010000
+          }
+        },
+        {
+          "t_ms": 1791803010000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "FILLER",
+            "creative_key": "f2",
+            "start_ms": 1791803010000,
+            "end_ms": 1791803040000
+          }
+        },
+        {
+          "t_ms": 1791803020000,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "FILLER",
+            "creative_key": "f2",
+            "start_ms": 1791803010000,
+            "end_ms": 1791803040000
+          }
+        },
+        {
+          "t_ms": 1791803039999,
+          "expected": {
+            "block": "EXTERNAL",
+            "kind": "FILLER",
+            "creative_key": "f2",
+            "start_ms": 1791803010000,
+            "end_ms": 1791803040000
+          }
+        }
+      ],
+      "note": "defesa (§8.2.4): c4 sobrepõe c2; c3 extrapola o bloco; c6 começa no fim do bloco; intervalos de 30 s com fallback de 60 s viram FILLER"
+    }
+  ]
+}

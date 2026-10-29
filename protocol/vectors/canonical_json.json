@@ -1,0 +1,187 @@
+{
+  "version": 1,
+  "generated_by": "backend/app/modules/playback/vectors.py (RDPP/1 — implementação de referência)",
+  "float_marker": "{\"$float\": \"<texto>\"} representa um número de ponto flutuante real",
+  "cases": [
+    {
+      "name": "objeto_vazio",
+      "input": {},
+      "canonical": "{}"
+    },
+    {
+      "name": "lista_vazia",
+      "input": [],
+      "canonical": "[]"
+    },
+    {
+      "name": "string_vazia",
+      "input": "",
+      "canonical": "\"\""
+    },
+    {
+      "name": "literais",
+      "input": [
+        true,
+        false,
+        null
+      ],
+      "canonical": "[true,false,null]"
+    },
+    {
+      "name": "inteiros",
+      "input": [
+        0,
+        -1,
+        1,
+        30000,
+        1791380000000,
+        9007199254740991,
+        -9007199254740991
+      ],
+      "canonical": "[0,-1,1,30000,1791380000000,9007199254740991,-9007199254740991]"
+    },
+    {
+      "name": "chaves_ordenadas",
+      "input": {
+        "b": 1,
+        "a": 2,
+        "B": 3,
+        "_": 4,
+        "aa": 5,
+        "a0": 6,
+        "": 7
+      },
+      "canonical": "{\"\":7,\"B\":3,\"_\":4,\"a\":2,\"a0\":6,\"aa\":5,\"b\":1}"
+    },
+    {
+      "name": "chaves_unicode_por_ponto_de_codigo",
+      "input": {
+        "z": 1,
+        "é": 2,
+        "e": 3,
+        "É": 4,
+        "~": 5,
+        "ü": 6
+      },
+      "canonical": "{\"e\":3,\"z\":1,\"~\":5,\"É\":4,\"é\":2,\"ü\":6}"
+    },
+    {
+      "name": "aninhado",
+      "input": {
+        "z": {
+          "y": [
+            3,
+            {
+              "b": null,
+              "a": [
+                1,
+                2
+              ]
+            }
+          ]
+        },
+        "a": {
+          "c": true
+        }
+      },
+      "canonical": "{\"a\":{\"c\":true},\"z\":{\"y\":[3,{\"a\":[1,2],\"b\":null}]}}"
+    },
+    {
+      "name": "escapes_minimos",
+      "input": {
+        "s": "aspas\" barra\\ bs\b ff\f nl\n cr\r tab\t"
+      },
+      "canonical": "{\"s\":\"aspas\\\" barra\\\\ bs\\b ff\\f nl\\n cr\\r tab\\t\"}"
+    },
+    {
+      "name": "controles_u00xx_minusculo",
+      "input": {
+        "s": "\u0000\u0001\u001f\u000b\u001e"
+      },
+      "canonical": "{\"s\":\"\\u0000\\u0001\\u001f\\u000b\\u001e\"}"
+    },
+    {
+      "name": "del_e_barra_nao_escapados",
+      "input": {
+        "s": "/</script>"
+      },
+      "canonical": "{\"s\":\"/</script>\"}"
+    },
+    {
+      "name": "nao_ascii_sem_escape",
+      "input": {
+        "s": "São Paulo — Goiânia ✓ 😀"
+      },
+      "canonical": "{\"s\":\"São Paulo — Goiânia ✓ 😀\"}"
+    },
+    {
+      "name": "evento_pop_exemplo",
+      "input": {
+        "schema": "rd.pop/1",
+        "playback_uuid": "d0a6ca68-2d3b-51e1-a63d-deb01314ecf9",
+        "seq": 1017,
+        "offline": false,
+        "campaign_id": null,
+        "started_at_ms": 1791381600000
+      },
+      "canonical": "{\"campaign_id\":null,\"offline\":false,\"playback_uuid\":\"d0a6ca68-2d3b-51e1-a63d-deb01314ecf9\",\"schema\":\"rd.pop/1\",\"seq\":1017,\"started_at_ms\":1791381600000}"
+    },
+    {
+      "name": "mensagem_auth",
+      "input": {
+        "challenge": "q1w2e3",
+        "device_id": "d244ebe0-aee0-5a78-ac0a-17ba6e649f2c",
+        "purpose": "rd-player-auth-v1"
+      },
+      "canonical": "{\"challenge\":\"q1w2e3\",\"device_id\":\"d244ebe0-aee0-5a78-ac0a-17ba6e649f2c\",\"purpose\":\"rd-player-auth-v1\"}"
+    },
+    {
+      "name": "float_simples",
+      "input": {
+        "$float": "1.5"
+      },
+      "error": "FLOAT_NOT_ALLOWED"
+    },
+    {
+      "name": "float_integral",
+      "input": {
+        "a": {
+          "$float": "1.0"
+        }
+      },
+      "error": "FLOAT_NOT_ALLOWED"
+    },
+    {
+      "name": "float_aninhado",
+      "input": {
+        "a": [
+          1,
+          {
+            "b": {
+              "$float": "0.1"
+            }
+          }
+        ]
+      },
+      "error": "FLOAT_NOT_ALLOWED"
+    },
+    {
+      "name": "float_negativo_zero",
+      "input": [
+        {
+          "$float": "-0.0"
+        }
+      ],
+      "error": "FLOAT_NOT_ALLOWED"
+    },
+    {
+      "name": "float_expoente",
+      "input": {
+        "x": {
+          "$float": "3e10"
+        }
+      },
+      "error": "FLOAT_NOT_ALLOWED"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+# Artefatos de build/empacotamento do Player Windows (nunca versionar)
+bin/
+obj/
+dist/
+out/
+*.user
+.vs/
+TestResults/

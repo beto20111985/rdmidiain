@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="pt-BR">
+    <string name="app_name">RD Player</string>
+    <string name="brand_name">RD Mídia Indoor</string>
+    <string name="brand_tagline">Anuncie aqui</string>
+    <string name="device_admin_description">Permite ao RD Player operar como dispositivo dedicado (kiosk).</string>
+
+    <string name="pairing_title">Parear esta tela</string>
+    <string name="pairing_hint">No painel: Telas → Parear, informe o código acima ou leia o QR Code.\nTécnico no local: botão OK/Menu → Parear com login de técnico.</string>
+    <string name="pairing_error">Sem conexão com o servidor: %1$s</string>
+
+    <string name="alert_clock">Corrija a data e hora</string>
+    <plurals name="alert_offline_footer">
+        <item quantity="one">Sem atualização há %1$d dia — conecte à internet</item>
+        <item quantity="many">Sem atualização há %1$d dias — conecte à internet</item>
+        <item quantity="other">Sem atualização há %1$d dias — conecte à internet</item>
+    </plurals>
+    <plurals name="alert_offline_center">
+        <item quantity="one">Este equipamento está há %1$d dia sem atualizar.\nConecte-o à internet para continuar recebendo as campanhas.</item>
+        <item quantity="many">Este equipamento está há %1$d dias sem atualizar.\nConecte-o à internet para continuar recebendo as campanhas.</item>
+        <item quantity="other">Este equipamento está há %1$d dias sem atualizar.\nConecte-o à internet para continuar recebendo as campanhas.</item>
+    </plurals>
+
+    <string name="menu_title">Opções</string>
+    <string name="menu_wifi">Configurar Wi-Fi</string>
+    <string name="menu_tech">Menu técnico (PIN)</string>
+    <string name="menu_pair_login">Parear com login de técnico</string>
+    <string name="menu_exit">Sair do player</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancelar</string>
+    <string name="back">Voltar</string>
+    <string name="not_available_on_device">Recurso indisponível neste aparelho</string>
+
+    <string name="pin_title">PIN técnico</string>
+    <string name="pin_hint">Digite o PIN</string>
+    <string name="pin_wrong">PIN incorreto</string>
+    <string name="pin_locked">Muitas tentativas. Aguarde 5 minutos.</string>
+    <string name="pin_not_configured">PIN técnico não configurado: defina um PIN agora.</string>
+    <string name="pin_invalid">PIN deve ter de 6 a 12 dígitos e as duas entradas devem coincidir.</string>
+
+    <string name="pair_login_title">Pareamento pelo técnico</string>
+    <string name="pair_login_hint">Usuário com permissão de parear telas. As credenciais não ficam gravadas no aparelho.</string>
+    <string name="field_screen_code">Código da tela (ex.: TEL-GO-7Q3M)</string>
+    <string name="field_login">E-mail / login</string>
+    <string name="field_password">Senha</string>
+    <string name="field_totp">Código 2FA (se houver)</string>
+    <string name="pair_login_submit">Parear</string>
+    <string name="pair_login_ok">Pareamento solicitado. Aguardando confirmação do servidor.</string>
+    <string name="pair_login_fail">Falha no pareamento: %1$s</string>
+
+    <string name="setup_title">Configuração inicial</string>
+    <string name="setup_pin_title">Definir PIN técnico</string>
+    <string name="setup_api_hint">Endereço da API (HTTPS obrigatório; HTTP só para hosts de desenvolvimento: %1$s)</string>
+    <string name="field_api_url">https://api.exemplo.com.br</string>
+    <string name="field_panel_url">Endereço do painel (opcional, para o QR Code)</string>
+    <string name="field_pin">Novo PIN técnico (6 a 12 dígitos)</string>
+    <string name="field_pin_confirm">Confirme o PIN</string>
+    <string name="setup_overlay_hint">Android 10 ou superior sem modo kiosk: para abrir sozinho ao ligar, permita \"Sobrepor a outros apps\" ou defina o player como tela inicial.</string>
+    <string name="setup_overlay_button">Permitir abrir ao ligar (sobrepor apps)</string>
+    <string name="setup_save">Salvar e continuar</string>
+    <string name="setup_offline_warning">Sem internet: o pareamento começa assim que houver conexão.</string>
+    <string name="net_online">Conectado à internet</string>
+    <string name="net_offline">Sem conexão com a internet</string>
+
+    <string name="wifi_title">Wi-Fi</string>
+    <string name="wifi_scan">Procurar redes</string>
+    <string name="wifi_system_settings">Abrir configurações de Wi-Fi do sistema</string>
+    <string name="wifi_ethernet">Conectado por cabo (Ethernet)</string>
+    <string name="wifi_connected">Conectado a %1$s (%2$d dBm)</string>
+    <string name="wifi_disabled">Wi-Fi desligado</string>
+    <string name="wifi_enable_failed">Não foi possível ligar o Wi-Fi neste modo</string>
+    <string name="wifi_scan_throttled">Busca limitada pelo sistema; mostrando o último resultado</string>
+    <string name="wifi_no_results">Nenhuma rede encontrada (verifique se a localização está permitida)</string>
+    <string name="wifi_item_secured">%1$s  (%2$d dBm) — protegida</string>
+    <string name="wifi_item_open">%1$s  (%2$d dBm) — aberta</string>
+    <string name="wifi_password_for">Senha de %1$s</string>
+    <string name="wifi_connecting">Conectando a %1$s…</string>
+    <string name="wifi_connect_failed">Falha ao conectar</string>
+
+    <string name="tech_title">Menu técnico</string>
+    <string name="tech_diag">App %1$s (%2$d) · modo %3$s\nDispositivo: %4$s · Tela: %5$s\nAPI: %6$s\nManifesto ativo: %7$s · staged: %8$s · anterior: %9$s\nEstado: %10$s · %11$s · offset relógio: %12$d ms\nAlertas: %13$s</string>
+    <string name="tech_resync">Ressincronizar agora</string>
+    <string name="tech_resync_started">Sincronização iniciada</string>
+    <string name="tech_outbox">Enviar provas de exibição pendentes</string>
+    <string name="tech_outbox_result">Pendentes: %1$d → %2$d</string>
+    <string name="tech_config">Configurar endereço da API / painel</string>
+    <string name="tech_change_pin">Alterar PIN técnico</string>
+    <string name="tech_repair">Parear novamente (nova identidade)</string>
+    <string name="tech_repair_confirm">A identidade atual será apagada e o aparelho voltará à tela de pareamento. Continuar?</string>
+    <string name="tech_exit_kiosk">Sair do modo kiosk (até reiniciar)</string>
+    <string name="tech_exit_kiosk_confirm">Os bloqueios serão removidos até o próximo boot. Continuar?</string>
+    <string name="tech_resume_kiosk">Reativar modo kiosk</string>
+    <string name="tech_release_do">Remover Device Owner (descomissionar)</string>
+    <string name="tech_release_do_confirm">Isto remove definitivamente o modo kiosk. Será preciso provisionar de novo. Continuar?</string>
+    <string name="tech_reboot">Reiniciar aparelho</string>
+    <string name="tech_reboot_confirm">Reiniciar o aparelho agora?</string>
+    <string name="tech_set_home">Definir o player como tela inicial</string>
+    <string name="tech_system_settings">Configurações do sistema</string>
+    <string name="tech_restart_app">Reiniciar o player</string>
+</resources>

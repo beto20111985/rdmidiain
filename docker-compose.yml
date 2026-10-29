@@ -1,0 +1,821 @@
+# =============================================================================
+# RD Mídia Indoor — Docker Compose LOCAL **INTEGRADO** (alvo da janela de reinício)
+# -----------------------------------------------------------------------------
+# Este arquivo SUBSTITUI o docker-compose.yml da raiz na JANELA DE REINÍCIO
+# INTEGRADO (procedimento exato em ops/README.md §Janela integrada). Os caminhos
+# relativos são da RAIZ do projeto. Validar sem aplicar:
+#   docker compose --project-directory . -f ops/dev/docker-compose.integrated.yml config -q
+#
+# Diferenças em relação ao docker-compose.yml vivo (só serviços congelados):
+#   postgres     porta só em 127.0.0.1; sem env_file; superusuário via Docker secret
+#   redis        porta só em 127.0.0.1; sem env_file; senha via secret (fora da
+#                linha de comando); roda como usuário redis
+#   migrate      NOVO one-shot: alembic upgrade head como rd_owner
+#   backend      runtime como rd_app (DML apenas) + Redis via secret + SMTP Mailpit
+#                + ./protocol:/protocol:ro (vetores RDPP/1; W-DB)
+#   worker       -Q default,media,notifications,financial,reports (RD_CELERY_QUEUES)
+#                + healthcheck celery inspect ping
+#   worker-beat  healthcheck (lock do RedBeat no Redis)
+#   frontend     healthcheck
+#   db-init      superusuário via secret + transferência de propriedade → rd_owner
+#   db-restore   superusuário via secret
+#   backend-tests NOVO (profile "test"): pytest com superusuário (a suíte cria
+#                bancos descartáveis — rd_app não tem CREATEDB)
+#   bootstrap    NOVO one-shot (AÇÃO 003): bootstrap-instance após migrate; backend/worker/
+#                beat dependem dele. Segredo bootstrap_master_password SÓ nele.
+#   backend/frontend/player-web: env_file opcional ops/dev/dev-origins.env (AÇÃO 003)
+# Segredos de aplicação (SECRET_KEY/JWT) continuam no .env em DEV para não
+# invalidar dados cifrados existentes; em produção vêm de secrets.
+# =============================================================================
+
+name: midiaindoor
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+# Ambiente comum de backend/worker/beat (sobrepõe valores do .env)
+x-backend-env: &backend-env
+  PYTHONUNBUFFERED: "1"
+  ENVIRONMENT: development
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: rd_app
+  POSTGRES_PASSWORD: ""
+  POSTGRES_PASSWORD_FILE: /run/secrets/db_app_password
+  DATABASE_URL: ""
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  REDIS_PASSWORD: ""
+  REDIS_PASSWORD_FILE: /run/secrets/redis_password
+  REDIS_URL: ""
+  CELERY_BROKER_URL: ""
+  CELERY_RESULT_BACKEND: ""
+  EMAIL_BACKEND: smtp
+  SMTP_HOST: mailpit
+  SMTP_PORT: "1025"
+  SMTP_USER: ""
+  SMTP_PASSWORD: ""
+  PROMETHEUS_ENABLED: "true"
+
+networks:
+  rd-internal:
+    driver: bridge
+  rd-external:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  media-storage:
+    driver: local
+  db-backups:
+    driver: local
+  mailpit-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  alertmanager-data:
+    driver: local
+  loki-data:
+    driver: local
+  promtail-positions:
+    driver: local
+  grafana-data:
+    driver: local
+
+secrets:
+  postgres_superuser_password:
+    file: ./secrets/postgres_superuser_password
+  db_owner_password:
+    file: ./secrets/db_owner_password
+  db_app_password:
+    file: ./secrets/db_app_password
+  db_backup_password:
+    file: ./secrets/db_backup_password
+  redis_password:
+    file: ./secrets/redis_password
+  backup_passphrase:
+    file: ./secrets/backup_passphrase
+  grafana_admin_password:
+    file: ./secrets/grafana_admin_password
+  # Senha INICIAL do Master primário (assento 1) — aleatória por instalação, gerada por
+  # ops/dev/generate-secrets.(sh|ps1); montada SOMENTE no serviço bootstrap (AÇÃO 003).
+  bootstrap_master_password:
+    file: ./secrets/bootstrap_master_password
+
+services:
+
+  nginx:
+    image: nginx:1.28-alpine
+    container_name: rd-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "127.0.0.1:8088:8088"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/snippets:/etc/nginx/snippets:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - backend
+      - frontend
+      - player-web
+    networks:
+      - rd-external
+      - rd-internal
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD-SHELL", "nginx -t -q && wget -q -O /dev/null http://127.0.0.1:8081/nginx-health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M
+
+  # ─── MIGRATE — one-shot: migrations como rd_owner (dono do schema) ─────────
+  migrate:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    restart: "no"
+    command: ["alembic", "upgrade", "head"]
+    env_file:
+      - .env
+    environment:
+      <<: *backend-env
+      POSTGRES_USER: rd_owner
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_owner_password
+    secrets:
+      - db_owner_password
+      - redis_password
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - rd-internal
+    logging: *default-logging
+
+  # ─── BOOTSTRAP — one-shot (AÇÃO 003): modo de aprovação + Master primário ────
+  # python -m app.cli bootstrap-instance (idempotente; código 0 = ok, 2 = configuração).
+  # Lê RD_BOOTSTRAP_DUAL_MASTER_APPROVAL/_MASTER_EMAIL/_MASTER_NAME SOMENTE na 1ª
+  # inicialização (depois o modo vive no banco e o ENV é ignorado — divergência só é
+  # sinalizada). Valores NÃO secretos: ops/dev/dev-bootstrap.env (local, opcional; modelo
+  # ops/dev/dev-bootstrap.env.example). Senha inicial: SÓ o segredo bootstrap_master_password.
+  bootstrap:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    restart: "no"
+    command: ["python", "-m", "app.cli", "bootstrap-instance"]
+    env_file:
+      - .env
+      - path: ./ops/dev/dev-bootstrap.env
+        required: false
+    environment:
+      <<: *backend-env
+      RD_BOOTSTRAP_MASTER_PASSWORD_FILE: /run/secrets/bootstrap_master_password
+    secrets:
+      - db_app_password
+      - redis_password
+      - bootstrap_master_password
+    volumes:
+      - ./backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - rd-internal
+    logging: *default-logging
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: rd-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+      # Origens LOCAIS de desenvolvimento (túnel ngrok etc.; não secreto, opcional) — contrato
+      # e "como trocar o domínio" em ops/README.md §3.1. Só vale em development/test.
+      - path: ./ops/dev/dev-origins.env
+        required: false
+    environment:
+      <<: *backend-env
+    secrets:
+      - db_app_password
+      - redis_password
+    volumes:
+      - ./backend:/app
+      - media-storage:/app/media
+      - ./protocol:/protocol:ro            # W-DB/janela: vetores RDPP/1 (protocol/vectors)
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      bootstrap:
+        condition: service_completed_successfully
+    networks:
+      - rd-internal
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: rd-worker
+    restart: unless-stopped
+    stop_grace_period: 120s            # ffmpeg/tarefas longas terminam ou liberam o lease (BUG-QA-01)
+    # Filas explícitas (pedido W1). Ponto único de ajuste no compose: RD_CELERY_QUEUES
+    # (shell/.env); deve coincidir com task_queues em backend/app/workers/celery_app.py.
+    # (Sem -Q o Celery consumiria todas as filas declaradas — mesmo resultado hoje.)
+    command: celery -A app.workers.celery_app worker --loglevel=info --concurrency=4 -Q ${RD_CELERY_QUEUES:-default,media,notifications,financial,reports}
+    env_file:
+      - .env
+    environment:
+      <<: *backend-env
+    secrets:
+      - db_app_password
+      - redis_password
+    volumes:
+      - ./backend:/app
+      - media-storage:/app/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      bootstrap:
+        condition: service_completed_successfully
+    networks:
+      - rd-internal
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.workers.celery_app inspect ping -d celery@$$HOSTNAME --timeout 10 2>/dev/null | grep -q pong"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1536M
+
+  worker-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: rd-worker-beat
+    restart: unless-stopped
+    command: celery -A app.workers.celery_app beat --loglevel=info --scheduler redbeat.RedBeatScheduler
+    env_file:
+      - .env
+    environment:
+      <<: *backend-env
+    secrets:
+      - db_app_password
+      - redis_password
+    volumes:
+      - ./backend:/app
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      bootstrap:
+        condition: service_completed_successfully
+    networks:
+      - rd-internal
+    logging: *default-logging
+    healthcheck:
+      # BUG-QA-03: saudável = o beat PUBLICOU o heartbeat há < 3 min. NÃO usar a existência
+      # do redbeat::lock (o lock de um beat morto sobrevive no AOF e o beat novo fica parado).
+      test: ["CMD", "python", "-m", "app.workers.observability", "beat-healthcheck", "--max-age", "180"]
+      interval: 60s
+      timeout: 20s
+      retries: 3
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+  # ─── BACKEND-TESTS — profile "test": pytest com superusuário (dev apenas) ──
+  #   docker compose --profile test run --rm backend-tests pytest -m integration
+  backend-tests:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    profiles: ["test"]
+    restart: "no"
+    command: ["pytest"]
+    env_file:
+      - .env
+    environment:
+      <<: *backend-env
+      ENVIRONMENT: test
+      POSTGRES_USER: ${POSTGRES_USER:-rduser}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_superuser_password
+    secrets:
+      - postgres_superuser_password
+      - redis_password
+    volumes:
+      - ./backend:/app
+      - ./protocol:/protocol:ro            # W-DB/janela: testes de vetores RDPP/1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - rd-internal
+    logging: *default-logging
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: rd-frontend
+    restart: unless-stopped
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    env_file:
+      # Origens LOCAIS de desenvolvimento (túnel ngrok etc.; não secreto, opcional) — contrato
+      # e "como trocar o domínio" em ops/README.md §3.1. Vite: RD_DEV_ALLOWED_ORIGINS → server.allowedHosts.
+      - path: ./ops/dev/dev-origins.env
+        required: false
+    environment:
+      - VITE_API_URL=http://localhost/api
+      - VITE_WS_URL=ws://localhost/ws
+    networks:
+      - rd-internal
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:5173/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+
+  player-web:
+    build:
+      context: ./player-web
+      dockerfile: Dockerfile
+      target: development
+    image: rd-midiaindoor-player-web:dev
+    container_name: rd-player-web
+    restart: unless-stopped
+    init: true
+    env_file:
+      # Origens LOCAIS de desenvolvimento (túnel ngrok etc.; não secreto, opcional) — contrato
+      # e "como trocar o domínio" em ops/README.md §3.1. Vite: RD_DEV_PLAYER_ALLOWED_ORIGINS → server.allowedHosts.
+      - path: ./ops/dev/dev-origins.env
+        required: false
+    environment:
+      - PLAYER_DEV_PORT=5174
+    volumes:
+      - ./player-web:/app
+      - /app/node_modules
+    networks:
+      - rd-internal
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:5174/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+
+  # ─── POSTGRES — só loopback; superusuário via Docker secret ────────────────
+  # Volume existente: POSTGRES_PASSWORD_FILE só vale no initdb; na janela a senha
+  # do superusuário é alinhada ao secret com ops/db/set-superuser-password.sql.
+  postgres:
+    image: postgres:16-alpine
+    container_name: rd-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-rdmidiaindoor}
+      POSTGRES_USER: ${POSTGRES_USER:-rduser}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_superuser_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=pt_BR.UTF-8 --lc-ctype=pt_BR.UTF-8"
+    secrets:
+      - postgres_superuser_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./backend/scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "127.0.0.1:5441:5432"
+    networks:
+      - rd-internal
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-rduser} -d ${POSTGRES_DB:-rdmidiaindoor}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+
+  # ─── REDIS — só loopback; senha via secret (config gerada em /tmp, nunca na
+  # linha de comando nem em variável de ambiente) ──────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: rd-redis
+    restart: unless-stopped
+    user: redis
+    command: ["sh", "-c", "umask 077; printf 'requirepass %s\\nappendonly yes\\ndir /data\\n' \"$$(cat /run/secrets/redis_password)\" > /tmp/redis.conf && exec redis-server /tmp/redis.conf"]
+    secrets:
+      - redis_password
+    volumes:
+      - redis-data:/data
+    ports:
+      - "127.0.0.1:6384:6379"
+    networks:
+      - rd-internal
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$(cat /run/secrets/redis_password)\" redis-cli ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+
+  db-init:
+    build:
+      context: ./ops
+      dockerfile: dbtools/Dockerfile
+    image: rd-midiaindoor-dbtools:dev
+    container_name: rd-db-init
+    restart: "no"
+    command: ["rd-db-init"]
+    environment:
+      RD_DB_NAME: ${POSTGRES_DB:-rdmidiaindoor}
+      RD_DB_SUPERUSER: ${POSTGRES_USER:-rduser}
+      RD_DB_SUPERUSER_PASSWORD_FILE: /run/secrets/postgres_superuser_password
+      RD_DB_TRANSFER_OWNERSHIP: "on"
+    secrets:
+      - postgres_superuser_password
+      - db_owner_password
+      - db_app_password
+      - db_backup_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - rd-internal
+    logging: *default-logging
+
+  db-backup:
+    build:
+      context: ./ops
+      dockerfile: dbtools/Dockerfile
+    image: rd-midiaindoor-dbtools:dev
+    container_name: rd-db-backup
+    restart: unless-stopped
+    init: true
+    command: ["rd-backup-scheduler"]
+    environment:
+      TZ: America/Sao_Paulo
+      RD_DB_NAME: ${POSTGRES_DB:-rdmidiaindoor}
+      RD_BACKUP_DB_USER: rd_backup
+      RD_BACKUP_DB_PASSWORD_FILE: /run/secrets/db_backup_password
+      RD_BACKUP_PASSPHRASE_FILE: /run/secrets/backup_passphrase
+      RD_BACKUP_AT: "03:00"
+      RD_BACKUP_KEEP_DAILY: "7"
+      RD_BACKUP_KEEP_WEEKLY: "4"
+      RD_BACKUP_KEEP_MONTHLY: "3"
+      RD_BACKUP_COUNT_ROWS: "1"
+      RD_BACKUP_OFFSITE_CMD: ""
+    secrets:
+      - db_backup_password
+      - backup_passphrase
+    volumes:
+      - db-backups:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - rd-internal
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "rd-backup-healthcheck"]
+      interval: 5m
+      timeout: 10s
+      retries: 1
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+
+  # ─── BACKUP-METRICS — sidecar: expõe idade/resultado do último backup e do último
+  # exercício de restore para o Prometheus (backup-metrics:9101/metrics.prom, só rede
+  # interna). Lê SOMENTE metadados do volume (read-only); nunca dumps ou segredos.
+  backup-metrics:
+    build:
+      context: ./ops
+      dockerfile: dbtools/Dockerfile
+    image: rd-midiaindoor-dbtools:dev
+    container_name: rd-backup-metrics
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=1m
+    command: ["rd-backup-metrics"]
+    environment:
+      TZ: America/Sao_Paulo
+      RD_METRICS_PORT: "9101"
+      RD_BACKUP_MAX_AGE_H: "26"
+      RD_DRILL_MAX_AGE_DAYS: "35"
+      RD_BACKUP_OFFSITE_REQUIRED: "false"
+    volumes:
+      - db-backups:/backups:ro
+    networks:
+      - rd-internal
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9101/metrics.prom"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 32M
+
+  db-restore:
+    build:
+      context: ./ops
+      dockerfile: dbtools/Dockerfile
+    image: rd-midiaindoor-dbtools:dev
+    profiles: ["ops"]
+    restart: "no"
+    command: ["rd-restore-drill"]
+    environment:
+      TZ: America/Sao_Paulo
+      RD_DB_NAME: ${POSTGRES_DB:-rdmidiaindoor}
+      RD_DB_SUPERUSER: ${POSTGRES_USER:-rduser}
+      RD_DB_SUPERUSER_PASSWORD_FILE: /run/secrets/postgres_superuser_password
+      RD_BACKUP_PASSPHRASE_FILE: /run/secrets/backup_passphrase
+    secrets:
+      - postgres_superuser_password
+      - backup_passphrase
+    volumes:
+      - db-backups:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - rd-internal
+    logging: *default-logging
+
+  mailpit:
+    image: axllent/mailpit:v1.28
+    container_name: rd-mailpit
+    restart: unless-stopped
+    environment:
+      MP_DATABASE: /data/mailpit.db
+      MP_MAX_MESSAGES: "5000"
+      MP_SMTP_AUTH_ACCEPT_ANY: "true"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "true"
+      TZ: America/Sao_Paulo
+    volumes:
+      - mailpit-data:/data
+    ports:
+      - "127.0.0.1:8025:8025"
+    networks:
+      - rd-internal
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    container_name: rd-prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+      - --storage.tsdb.retention.size=2GB
+      - --web.listen-address=:9090
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/prometheus/rules:/etc/prometheus/rules:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "127.0.0.1:9095:9090"
+    networks:
+      - rd-internal
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9090/-/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+
+  alertmanager:
+    image: prom/alertmanager:v0.28.1
+    container_name: rd-alertmanager
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+      - --cluster.listen-address=
+    volumes:
+      - ./observability/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    ports:
+      - "127.0.0.1:9093:9093"
+    depends_on:
+      - mailpit
+    networks:
+      - rd-internal
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9093/-/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+
+  loki:
+    build:
+      context: ./observability/loki
+    image: rd-midiaindoor-loki:dev
+    container_name: rd-loki
+    restart: unless-stopped
+    volumes:
+      - ./observability/loki/loki-config.yml:/etc/loki/rd-config.yml:ro
+      - loki-data:/loki
+    networks:
+      - rd-internal
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/busybox", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3100/ready"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768M
+
+  promtail:
+    image: grafana/promtail:3.6.0
+    container_name: rd-promtail
+    restart: unless-stopped
+    command:
+      - -config.file=/etc/promtail/rd-config.yml
+      - -config.expand-env=true
+    environment:
+      RD_COMPOSE_PROJECT: ${COMPOSE_PROJECT_NAME:-midiaindoor}
+    volumes:
+      - ./observability/promtail/promtail-config.yml:/etc/promtail/rd-config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - promtail-positions:/promtail
+    depends_on:
+      - loki
+    networks:
+      - rd-internal
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "/bin/bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9080 && printf 'GET /ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q '200 OK' <&3"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
+  grafana:
+    image: grafana/grafana:12.2.0
+    container_name: rd-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_admin_password
+      GF_SECURITY_DISABLE_GRAVATAR: "true"
+      GF_SECURITY_COOKIE_SAMESITE: strict
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+      GF_PLUGINS_PREINSTALL_DISABLED: "true"
+      GF_SERVER_ROOT_URL: http://127.0.0.1:3005
+      GF_DATE_FORMATS_DEFAULT_TIMEZONE: America/Sao_Paulo
+    secrets:
+      - grafana_admin_password
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:3005:3000"
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - rd-internal
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M

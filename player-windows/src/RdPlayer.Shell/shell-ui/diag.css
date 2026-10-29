@@ -1,0 +1,16 @@
+:root { color-scheme: dark; --bg: #0b0d12; --fg: #e8ebf1; --muted: #9aa3b2; --ok: #3ccf91; --bad: #ff5d6c; --card: #151924; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.45 "Segoe UI", system-ui, sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+h1 { font-size: 28px; margin: 0 0 8px; }
+h2 { font-size: 18px; margin: 28px 0 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.reason { color: #ffd166; margin: 0; }
+table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; }
+td { padding: 9px 14px; border-bottom: 1px solid #222837; vertical-align: top; }
+td:first-child { width: 38%; color: var(--muted); }
+.ok { color: var(--ok); font-weight: 600; }
+.bad { color: var(--bad); font-weight: 600; }
+code { background: #222837; padding: 1px 6px; border-radius: 4px; }
+ul { background: var(--card); border-radius: 10px; padding: 12px 32px; color: var(--bad); }
+.hint, footer { color: var(--muted); font-size: 14px; }
+footer { margin-top: 28px; }

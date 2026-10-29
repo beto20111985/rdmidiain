@@ -1,0 +1,31 @@
+RD Mídia Indoor — Player Windows — instalação rápida
+=====================================================
+
+Requisitos
+- Windows 10 1803 (build 17134) ou superior / Windows 11, 64 bits.
+- Microsoft Edge WebView2 Runtime (Evergreen). Já vem no Windows 11 e no Windows 10 atualizado.
+  Se faltar: https://go.microsoft.com/fwlink/p/?LinkId=2124703 (instalador "Evergreen Bootstrapper" da Microsoft).
+- Não precisa de .NET instalado (o pacote é self-contained) nem de permissão de administrador.
+
+Instalar
+1. Extraia este zip numa pasta qualquer.
+2. Abra o PowerShell nessa pasta e rode:
+     powershell -ExecutionPolicy Bypass -File .\install.ps1 -ApiBaseUrl https://api.SEU-DOMINIO -PanelUrl https://painel.SEU-DOMINIO
+   Opcional: -Autostart (iniciar com o Windows), -Monitor 1 (segundo monitor/TV), -UpdateKeyId/-UpdatePublicKey (chave de release).
+3. Defina o PIN técnico quando solicitado (fica salvo só como hash).
+4. O player abre em tela cheia e mostra o código de pareamento; conclua o pareamento pelo painel.
+
+Uso técnico
+- Menu técnico: Ctrl+Alt+Shift+F12 + PIN → recarregar, reiniciar, diagnóstico, ligar/desligar "iniciar com o Windows", fechar o player.
+- Alt+F4, Ctrl+W, F5, F11, F12 e afins ficam bloqueados. Ctrl+Alt+Del continua funcionando (saída de emergência do Windows).
+- Configuração: %PROGRAMDATA%\RdMidiaIndoor\Player\config.json
+- Dados (cache de mídia, chave do dispositivo, logs): %LOCALAPPDATA%\RdMidiaIndoor\Player
+- Logs: %LOCALAPPDATA%\RdMidiaIndoor\Player\logs (shell.log, watchdog.log)
+
+Desinstalar
+     powershell -ExecutionPolicy Bypass -File .\uninstall.ps1            (mantém dados e configuração)
+     ... -RemoveData -RemoveConfig                                       (apaga tudo; exige novo pareamento)
+
+Teste rápido sem instalar (não entra em tela cheia, não mexe em energia/autostart, fecha sozinho), no PowerShell:
+     .\RdPlayer.Watchdog.exe --smoke-test --config .\config.example.json --data-root $env:TEMP\rd-smoke --smoke-log $env:TEMP\rd-smoke\smoke.json
+     (resultado em $env:TEMP\rd-smoke\smoke.json e nos logs em $env:TEMP\rd-smoke\logs)

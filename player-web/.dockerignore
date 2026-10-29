@@ -1,0 +1,22 @@
+# Player Web — contexto de build: nada de dependências locais, builds, caches ou segredos
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+.cache/
+playwright-report/
+test-results/
+*.log
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+.DS_Store
+Thumbs.db
+
+# Arquivos de build não precisam estar dentro da imagem
+Dockerfile
+.dockerignore

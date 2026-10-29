@@ -1,0 +1,70 @@
+# RD Mídia Indoor — Backend Dependencies
+# Python 3.12
+
+# ─── WEB FRAMEWORK ───────────────────────────────────────────────────────────
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-multipart==0.0.17
+
+# ─── BANCO DE DADOS ──────────────────────────────────────────────────────────
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+alembic==1.14.0
+psycopg2-binary==2.9.10
+
+# ─── CACHE / FILAS ───────────────────────────────────────────────────────────
+redis[hiredis]==5.2.1
+celery[redis]==5.4.0
+celery-redbeat>=2.2.0
+
+# ─── AUTH / SEGURANÇA ────────────────────────────────────────────────────────
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==3.2.2          # apenas para verificar hashes legados (migração transparente p/ argon2id)
+argon2-cffi==25.1.0    # hash de senha argon2id (padrão)
+pyotp==2.9.0
+qrcode[pil]==8.0
+
+# ─── VALIDAÇÃO / SERIALIZAÇÃO ────────────────────────────────────────────────
+pydantic==2.10.3
+pydantic-settings==2.6.1
+pydantic[email]==2.10.3
+
+# ─── HTTP CLIENT ─────────────────────────────────────────────────────────────
+httpx==0.28.1
+aiohttp==3.11.10
+
+# ─── WEBSOCKET ───────────────────────────────────────────────────────────────
+websockets==14.1
+
+# ─── MÍDIA / PROCESSAMENTO ───────────────────────────────────────────────────
+Pillow==11.0.0
+python-magic==0.4.27
+ffmpeg-python==0.2.0
+
+# ─── STORAGE ─────────────────────────────────────────────────────────────────
+boto3==1.35.91          # Para MinIO/S3 futuro
+minio==7.2.11           # Para MinIO futuro
+
+# ─── RELATÓRIOS / EXPORTS ────────────────────────────────────────────────────
+openpyxl==3.1.5
+reportlab==4.2.5
+pandas==2.2.3
+
+# ─── EMAIL ───────────────────────────────────────────────────────────────────
+aiosmtplib==3.0.2
+jinja2==3.1.4
+
+# ─── UTILIDADES ──────────────────────────────────────────────────────────────
+python-slugify==8.0.4
+shortuuid==1.0.13
+pytz==2024.2
+babel==2.16.0
+cryptography==44.0.0
+itsdangerous==2.2.0
+nanoid==2.0.0
+
+# ─── OBSERVABILIDADE ─────────────────────────────────────────────────────────
+sentry-sdk[fastapi]==2.19.1
+prometheus-client==0.21.1
+structlog==24.4.0

@@ -1,0 +1,71 @@
+{
+  "schema": "rd.player.windows.config/1",
+  "api_base_url": "https://api.SEU-DOMINIO",
+  "ws_base_url": null,
+  "panel_url": "https://painel.SEU-DOMINIO",
+  "web": {
+    "source": "local",
+    "virtual_host": "player.rd.local",
+    "entry": "index.html",
+    "remote_url": null,
+    "bundle_dir": null
+  },
+  "display": {
+    "monitor": "primary",
+    "fullscreen": true,
+    "always_on_top": true,
+    "hide_cursor": true
+  },
+  "kiosk": {
+    "block_close": true,
+    "block_system_keys": false,
+    "tech_shortcut": "Ctrl+Alt+Shift+F12",
+    "tech_pin_hash": null,
+    "devtools_in_tech_menu": false,
+    "pin_max_attempts": 5,
+    "pin_lockout_seconds": 300
+  },
+  "power": {
+    "prevent_sleep": true,
+    "allow_remote_reboot": true,
+    "reboot_min_interval_minutes": 60,
+    "reboot_delay_seconds": 30
+  },
+  "watchdog": {
+    "enabled": true,
+    "heartbeat_interval_ms": 5000,
+    "hang_timeout_ms": 20000,
+    "startup_timeout_ms": 60000,
+    "progress_timeout_ms": 30000,
+    "startup_grace_ms": 90000,
+    "reload_grace_ms": 60000,
+    "max_reloads_before_restart": 3,
+    "reload_window_ms": 600000,
+    "revive_watchdog": true
+  },
+  "autostart": {
+    "enabled": false,
+    "method": "task"
+  },
+  "update": {
+    "enabled": true,
+    "auto_apply": true,
+    "check_interval_hours": 6,
+    "allow_downgrade": false,
+    "health_timeout_seconds": 120,
+    "require_bundle_health": true,
+    "max_package_mb": 512,
+    "public_keys": []
+  },
+  "telemetry": {
+    "wifi": true
+  },
+  "logging": {
+    "level": "info",
+    "max_file_mb": 5,
+    "max_files": 10
+  },
+  "dev": {
+    "allow_insecure_api": false
+  }
+}

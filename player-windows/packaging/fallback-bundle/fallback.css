@@ -1,0 +1,5 @@
+html, body { margin: 0; height: 100%; background: #000; color: #f2f4f8; font: 22px/1.5 "Segoe UI", system-ui, sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 12vh 48px; }
+h1 { font-size: 56px; margin: 0 0 24px; }
+code { background: #1c2230; padding: 2px 8px; border-radius: 6px; }
+.muted { color: #8b93a3; font-size: 18px; }

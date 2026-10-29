@@ -1,0 +1,37 @@
+# =============================================================================
+# .dockerignore da RAIZ — defesa em profundidade caso alguém use "." como
+# contexto de build. Os contextos oficiais são subdiretórios (backend/,
+# frontend/, player-web/, nginx/, ops/, observability/*), cada um com o seu
+# .dockerignore. A memória privada (stack/) e segredos NUNCA entram em imagens.
+# =============================================================================
+stack/
+secrets/
+.env
+.env.*
+**/.env
+**/.env.*
+!**/.env.example
+.agents/
+.claude/
+skills-lock.json
+.git/
+**/node_modules/
+**/dist/
+**/__pycache__/
+**/.pytest_cache/
+**/htmlcov/
+**/.coverage
+**/coverage/
+backend/media/
+backend/.devtest/
+# Origens LOCAIS de desenvolvimento (domínio de túnel desta máquina) — nunca em imagem
+ops/dev/dev-origins.env
+**/dev-origins.env
+ops/dev/dev-bootstrap.env
+**/dev-bootstrap.env
+**/.devtest/
+**/*.pem
+**/*.key
+**/*.apk
+**/*.exe
+**/*.log

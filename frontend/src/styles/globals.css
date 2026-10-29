@@ -1,0 +1,315 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =====================================================================
+   RD Mídia Indoor — Tokens do Design System (DS §5, §6, §8, §15, §16)
+   ---------------------------------------------------------------------
+   * Fonte única de cores: tudo o que é tema vive AQUI.
+   * Cores semânticas em canais RGB ("R G B") para uso com alfa:
+       CSS:      rgb(var(--action))  /  rgb(var(--action) / 40%)
+       Tailwind: bg-action, text-text-muted, border-control-border ...
+   * Tema ESCURO = padrão (DS §16, valores normativos).
+   * Tema CLARO  = [data-theme="light"] — todos os tokens redefinidos;
+     contrastes validados por src/styles/tokens.test.ts (≥ 4,5:1 texto,
+     ≥ 3:1 bordas de campo/controles e séries de gráfico).
+   * Valores hexadecimais equivalentes nos comentários.
+   ===================================================================== */
+
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Marca (constantes, iguais nos dois temas) */
+  --brand-black: #05070a;
+  --brand-graphite: #0d1117;
+  --brand-deep-blue: #082a4a;
+  --brand-blue: #0b84ff;
+  --brand-light-blue: #5bceff;
+  --brand-white: #f5f7fa;
+  --brand-gray: #a6afbb;
+
+  /* Superfícies */
+  --bg: 5 7 10; /* #05070a canvas */
+  --sidebar: 6 16 32; /* #061020 */
+  --surface: 8 20 38; /* #081426 cartões */
+  --surface-raised: 13 28 50; /* #0d1c32 menus, modais */
+  --surface-hover: 13 28 50; /* #0d1c32 hover */
+  --field: 6 16 32; /* #061020 fundo de campos (DS §10 inputs = sidebar) */
+
+  /* Bordas */
+  --border: 32 56 89; /* #203859 decorativa */
+  --control-border: 100 122 150; /* #647a96 limite perceptível de campos */
+
+  /* Texto */
+  --text: 245 247 250; /* #f5f7fa */
+  --text-muted: 166 175 187; /* #a6afbb */
+
+  /* Ação */
+  --action: 0 86 179; /* #0056b3 */
+  --action-hover: 6 74 149; /* #064a95 */
+  --action-foreground: 245 247 250; /* #f5f7fa */
+  --link: 91 206 255; /* #5bceff botão terciário/links */
+  --focus: 91 206 255; /* #5bceff */
+
+  /* Status funcionais (texto e ícone); fundo = mesma cor com --badge-alpha */
+  --success: 54 214 172; /* #36d6ac */
+  --warning: 246 198 106; /* #f6c66a */
+  --danger: 255 123 134; /* #ff7b86 */
+  --info: 91 206 255; /* #5bceff (Agendada = azul claro) */
+  --neutral: 166 175 187; /* #a6afbb (Pausada = cinza) */
+  --badge-alpha: 0.14;
+
+  /* Gráficos (DS §11, §16) */
+  --chart-1: 11 132 255; /* #0b84ff */
+  --chart-2: 0 185 242; /* #00b9f2 */
+  --chart-3: 91 206 255; /* #5bceff */
+  --chart-4: 158 175 209; /* #9eafd1 */
+  --chart-track: 8 42 74; /* #082a4a trilha azul escura */
+  --chart-grid: 32 56 89; /* #203859 */
+
+  /* Navegação ativa (DS §6: gradiente azul profundo → ação + marcador) */
+  --nav-active-from: 8 42 74; /* #082a4a */
+  --nav-active-to: 0 86 179; /* #0056b3 */
+  --nav-active-text: 245 247 250;
+  --nav-marker: 91 206 255;
+
+  /* Sobreposição (fundo escurecido de modal/gaveta) */
+  --overlay: 2 4 8;
+  --overlay-alpha: 0.72;
+
+  /* Luz ambiente (DS §6) */
+  --ambient: radial-gradient(ellipse at 80% 0%, rgb(11 132 255 / 10%), transparent 48%);
+
+  /* Sombras */
+  --shadow-card: 0 8px 28px rgb(0 0 0 / 16%);
+  --shadow-overlay: 0 16px 48px rgb(0 0 0 / 45%);
+
+  /* Tipografia */
+  --font-ui: 'Manrope', 'Inter', system-ui, sans-serif;
+
+  /* Espaços (DS §8) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Raios */
+  --radius-control: 8px;
+  --radius-inner: 12px;
+  --radius-card: 16px;
+  --radius-modal: 20px;
+
+  /* Layout */
+  --sidebar-width: 248px;
+  --sidebar-collapsed: 72px;
+  --header-height: 72px;
+  --content-max: 1600px;
+
+  /* Movimento (DS §15) */
+  --duration-fast: 160ms;
+  --duration-normal: 220ms;
+  --ease: cubic-bezier(.2, 0, 0, 1);
+
+  /* Camadas (DS §16) + --z-popover (menus/tooltip abertos sobre modais) + --z-banner (faixa fixa de
+     impersonation/demonstração: acima do header, abaixo de overlays) */
+  --z-header: 20;
+  --z-dropdown: 40;
+  --z-overlay: 80;
+  --z-modal: 90;
+  --z-popover: 95;
+  --z-toast: 100;
+  --z-banner: 30;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --bg: 242 245 249; /* #f2f5f9 */
+  --sidebar: 255 255 255; /* #ffffff */
+  --surface: 255 255 255; /* #ffffff */
+  --surface-raised: 255 255 255; /* #ffffff */
+  --surface-hover: 233 239 247; /* #e9eff7 */
+  --field: 255 255 255; /* #ffffff */
+
+  --border: 213 222 233; /* #d5dee9 */
+  --control-border: 107 122 142; /* #6b7a8e */
+
+  --text: 11 21 36; /* #0b1524 */
+  --text-muted: 74 87 104; /* #4a5768 */
+
+  --action: 0 86 179; /* #0056b3 (branco 7,04:1) */
+  --action-hover: 0 71 143; /* #00478f */
+  --action-foreground: 255 255 255;
+  --link: 0 86 179; /* #0056b3 */
+  --focus: 0 98 204; /* #0062cc */
+
+  --success: 5 104 79; /* #05684f */
+  --warning: 125 79 0; /* #7d4f00 */
+  --danger: 168 32 44; /* #a8202c */
+  --info: 0 93 133; /* #005d85 */
+  --neutral: 80 91 104; /* #505b68 */
+  --badge-alpha: 0.1;
+
+  --chart-1: 7 96 192; /* #0760c0 */
+  --chart-2: 0 160 192; /* #00a0c0 */
+  --chart-3: 58 82 164; /* #3a52a4 */
+  --chart-4: 108 138 208; /* #6c8ad0 */
+  --chart-track: 219 233 251; /* #dbe9fb */
+  --chart-grid: 213 222 233; /* #d5dee9 */
+
+  --nav-active-from: 8 42 74;
+  --nav-active-to: 0 86 179;
+  --nav-active-text: 255 255 255;
+  --nav-marker: 91 206 255;
+
+  --overlay: 11 21 36;
+  --overlay-alpha: 0.48;
+
+  --ambient: radial-gradient(ellipse at 80% 0%, rgb(11 132 255 / 7%), transparent 48%);
+
+  --shadow-card: 0 8px 28px rgb(16 42 76 / 7%);
+  --shadow-overlay: 0 16px 48px rgb(16 42 76 / 18%);
+}
+
+/* =====================================================================
+   Base
+   ===================================================================== */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    border-color: rgb(var(--border));
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    font-family: var(--font-ui);
+    font-size: 14px;
+    line-height: 22px;
+    color: rgb(var(--text));
+    background: var(--ambient), rgb(var(--bg));
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    caret-color: rgb(var(--focus));
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--focus));
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: rgb(var(--action) / 45%);
+    color: rgb(var(--text));
+  }
+
+  /* Números tabulares em toda tabela e onde houver data-numeric */
+  table,
+  [data-numeric],
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Barras de rolagem no tema */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--control-border) / 60%) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgb(var(--control-border) / 55%);
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  a {
+    color: rgb(var(--link));
+    text-underline-offset: 3px;
+  }
+
+  /* Campos: 16 px no mobile para evitar zoom automático (DS §7) */
+  @media (max-width: 767px) {
+    input,
+    select,
+    textarea {
+      font-size: 16px;
+      line-height: 24px;
+    }
+  }
+}
+
+@layer components {
+  /* Link "pular para o conteúdo" — primeiro foco da página */
+  .rd-skip-link {
+    position: fixed;
+    left: 16px;
+    top: -100px;
+    z-index: calc(var(--z-toast) + 1);
+    padding: 10px 16px;
+    border-radius: var(--radius-control);
+    background: rgb(var(--action));
+    color: rgb(var(--action-foreground));
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .rd-skip-link:focus {
+    top: 12px;
+  }
+
+  /* Rótulo curto de métrica em caixa alta (único uso permitido, DS §7) */
+  .rd-metric-label {
+    font-size: 12px;
+    line-height: 18px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgb(var(--text-muted));
+  }
+}
+
+/* =====================================================================
+   Movimento reduzido (DS §15/§16)
+   ===================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

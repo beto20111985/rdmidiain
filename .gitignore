@@ -1,0 +1,103 @@
+# =============================================================================
+# RD Mídia Indoor — .gitignore (raiz)
+# Objetivo (Prompt Universal §16): MEMÓRIA LOCAL PRESERVADA + PRODUTO PUBLICÁVEL LIMPO.
+# Ignorar NÃO apaga nada: stack/, secrets/, .env etc. continuam no disco local do
+# proprietário; apenas não são versionados/publicados. Ver ops/README.md §Higiene.
+# =============================================================================
+
+# ─── Memória privada do proprietário (NUNCA publicar) ───────────────────────
+/stack/
+
+# ─── Segredos ───────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.env
+!*.env.example
+/secrets/
+**/secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+!**/fixtures/**/*.pem
+nginx/ssl/
+*.age
+*.gpg
+# credenciais de contas de TESTE locais geradas pelo CLI dev-only do backend
+backend/.devtest/
+# Origens LOCAIS de desenvolvimento (domínio de túnel desta máquina; modelo: ops/dev/dev-origins.env.example)
+ops/dev/dev-origins.env
+# Bootstrap LOCAL de desenvolvimento (não secreto; modelo: ops/dev/dev-bootstrap.env.example)
+ops/dev/dev-bootstrap.env
+
+# ─── Ferramentas locais do proprietário (não são produto) ────────────────────
+# .agents/ e skills-lock.json: skills de agentes instaladas localmente;
+# .claude/: configuração local do Claude Code. Avaliado: nenhum arquivo do
+# produto depende deles; se no futuro a equipe quiser versionar configuração
+# compartilhada (.claude/settings.json), remova a linha correspondente.
+/.agents/
+/.claude/
+/skills-lock.json
+
+# ─── Dependências ───────────────────────────────────────────────────────────
+node_modules/
+.pnpm-store/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# ─── Builds / artefatos ─────────────────────────────────────────────────────
+dist/
+build/
+*.tsbuildinfo
+backend/media/
+!backend/media/.gitkeep
+player-windows/src-tauri/target/
+player-android/**/build/
+player-android/.gradle/
+player-android/local.properties
+*.apk
+*.aab
+*.exe
+*.msi
+*.dmg
+*.AppImage
+*.deb
+
+# ─── Testes / cobertura / caches ────────────────────────────────────────────
+htmlcov/
+.coverage
+.coverage.*
+coverage/
+coverage.xml
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.vite/
+.cache/
+playwright-report/
+test-results/
+.eslintcache
+
+# ─── Logs / backups locais ──────────────────────────────────────────────────
+*.log
+logs/
+*.dump
+*.sql.gz
+backups/
+
+# ─── SO / editores ──────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*~

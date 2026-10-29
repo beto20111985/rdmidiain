@@ -1,0 +1,26 @@
+-r requirements.txt
+
+# Testes
+pytest==8.3.4
+pytest-asyncio==0.24.0
+pytest-cov==6.0.0
+factory-boy==3.3.1
+faker==30.8.2
+hypothesis==6.122.3
+time-machine==2.16.0
+respx==0.22.0
+asgi-lifespan==2.1.0
+pypdf==5.1.0
+
+# Qualidade de código
+ruff==0.7.4
+mypy==1.13.0
+pre-commit==4.0.1
+
+# Debug
+ipdb==0.13.13
+rich==13.9.4
+
+# Segurança
+safety>=3.0.0
+bandit==1.7.10

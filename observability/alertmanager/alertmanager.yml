@@ -1,0 +1,41 @@
+# =============================================================================
+# RD Mídia Indoor — Alertmanager.
+# LOCAL: entrega por SMTP ao Mailpit (sem TLS, sem autenticação; só rede interna).
+# PRODUÇÃO: substituir smtp_* e destinatários por instância (dependência externa:
+# provedor SMTP/Telegram/etc.). Nunca colocar senha SMTP aqui: usar
+# smtp_auth_password_file apontando para um Docker secret.
+# =============================================================================
+global:
+  smtp_smarthost: "mailpit:1025"
+  smtp_from: "alertas@rd-midiaindoor.local"
+  smtp_require_tls: false
+  resolve_timeout: 5m
+
+route:
+  receiver: email-ops
+  group_by: ["alertname", "severity"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers: ['alertname="RdWatchdog"']
+      receiver: blackhole
+      repeat_interval: 24h
+
+receivers:
+  - name: email-ops
+    email_configs:
+      - to: "ops@rd-midiaindoor.local"
+        send_resolved: true
+  - name: blackhole
+
+inhibit_rules:
+  - source_matchers: ['severity="critical"']
+    target_matchers: ['severity="warning"']
+    equal: ["alertname"]
+  # beat parado ⇒ o heartbeat do worker também para: avisa só a causa
+  - source_matchers: ['alertname="RdBeatSemPublicarHeartbeat"']
+    target_matchers: ['alertname="RdWorkerSemHeartbeat"']
+  # Redis fora ⇒ heartbeat/broker/filas ficam sem série: avisa só a causa (sem tempestade)
+  - source_matchers: ['alertname="RdRedisIndisponivel"']
+    target_matchers: ['alertname=~"RdBeatSemPublicarHeartbeat|RdWorkerSemHeartbeat|RdBrokerIlegivel|RdFilaCeleryAcumulada|RdPlayersSemConexao"']

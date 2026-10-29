@@ -1,0 +1,40 @@
+# =============================================================================
+# Alertmanager de PRODUÇÃO (por instância) — copiar para ${RD_CONFIG_DIR}/alertmanager.yml
+# e ajustar. Senha SMTP via arquivo (nunca no YAML). Destinos são dependência externa.
+# =============================================================================
+global:
+  smtp_smarthost: "smtp.exemplo.invalid:587"
+  smtp_from: "alertas@exemplo.invalid"
+  smtp_auth_username: "alertas@exemplo.invalid"
+  smtp_auth_password_file: /run/secrets/smtp_password
+  smtp_require_tls: true
+  resolve_timeout: 5m
+
+route:
+  receiver: email-ops
+  group_by: ["alertname", "severity"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers: ['alertname="RdWatchdog"']
+      receiver: blackhole
+      repeat_interval: 24h
+
+receivers:
+  - name: email-ops
+    email_configs:
+      - to: "ops@exemplo.invalid"
+        send_resolved: true
+  - name: blackhole
+
+inhibit_rules:
+  - source_matchers: ['severity="critical"']
+    target_matchers: ['severity="warning"']
+    equal: ["alertname"]
+  # beat parado ⇒ o heartbeat do worker também para: avisa só a causa
+  - source_matchers: ['alertname="RdBeatSemPublicarHeartbeat"']
+    target_matchers: ['alertname="RdWorkerSemHeartbeat"']
+  # Redis fora ⇒ heartbeat/broker/filas ficam sem série: avisa só a causa (sem tempestade)
+  - source_matchers: ['alertname="RdRedisIndisponivel"']
+    target_matchers: ['alertname=~"RdBeatSemPublicarHeartbeat|RdWorkerSemHeartbeat|RdBrokerIlegivel|RdFilaCeleryAcumulada|RdPlayersSemConexao"']

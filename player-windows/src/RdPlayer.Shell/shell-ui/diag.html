@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>RD Mídia Indoor — diagnóstico do player Windows</title>
+  <link rel="stylesheet" href="diag.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>RD Mídia Indoor — Player Windows</h1>
+      <p id="reason" class="reason"></p>
+    </header>
+    <section>
+      <h2>Verificações</h2>
+      <table id="checks"><tbody></tbody></table>
+    </section>
+    <section id="config-section" hidden>
+      <h2>Erros de configuração</h2>
+      <ul id="config-errors"></ul>
+      <p class="hint">Edite <code>%PROGRAMDATA%\RdMidiaIndoor\Player\config.json</code> e reinicie o player (menu técnico → Reiniciar o aplicativo).</p>
+    </section>
+    <section>
+      <h2>Sistema</h2>
+      <table id="system"><tbody></tbody></table>
+    </section>
+    <footer>Acesso técnico: atalho configurado em <code>kiosk.tech_shortcut</code> + PIN.</footer>
+  </main>
+  <script src="diag.js"></script>
+</body>
+</html>

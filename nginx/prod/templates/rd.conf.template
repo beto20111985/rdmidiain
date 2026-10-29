@@ -1,0 +1,175 @@
+# =============================================================================
+# RD Mídia Indoor — nginx de PRODUÇÃO (template renderizado por envsubst no start
+# da imagem oficial do nginx: /etc/nginx/templates/*.template → /etc/nginx/conf.d/).
+# Somente variáveis com prefixo RD_ são substituídas (NGINX_ENVSUBST_FILTER=^RD_).
+#
+# Variáveis (por instância white-label; nenhum domínio fixo no código):
+#   RD_PANEL_DOMAIN   ex.: painel.cliente.com.br   (painel + API + /ws)
+#   RD_PLAYER_DOMAIN  ex.: player.cliente.com.br   (Player Web, origem separada)
+#   RD_TLS_CERT_DIR   diretório com <dominio>/fullchain.pem e <dominio>/privkey.pem
+#                     (padrão /etc/letsencrypt/live — volume do certbot)
+# =============================================================================
+
+resolver 127.0.0.11 valid=10s ipv6=off;
+resolver_timeout 5s;
+
+# ─── X-Forwarded-Proto/-Port repassados ao upstream (snippets/proxy-common.conf) ─
+# Produção: ESTE nginx é a borda TLS ⇒ valores SEMPRE da própria conexão, nunca do
+# cliente (mesmo comportamento de antes: $scheme / $server_port). Sem real_ip aqui.
+map $scheme $rd_forwarded_proto {
+    default $scheme;
+}
+map $scheme $rd_forwarded_port {
+    default $server_port;
+}
+
+upstream rd_backend {
+    zone rd_backend 64k;
+    server backend:8000 resolve;
+    keepalive 64;
+}
+
+upstream rd_frontend {
+    zone rd_frontend 64k;
+    server frontend:80 resolve;
+    keepalive 16;
+}
+
+upstream rd_player_web {
+    zone rd_player_web 64k;
+    server player-web:8080 resolve;
+    keepalive 16;
+}
+
+include /etc/nginx/snippets/internal-status.conf;
+
+# ─── Host desconhecido: descarta (sem vazar certificado/servidor) ─────────────
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+    return 444;
+}
+server {
+    listen 443 ssl default_server;
+    listen [::]:443 ssl default_server;
+    http2 on;
+    server_name _;
+    ssl_reject_handshake on;
+}
+
+# ─── HTTP → HTTPS + desafio ACME (certbot webroot) ────────────────────────────
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${RD_PANEL_DOMAIN} ${RD_PLAYER_DOMAIN};
+
+    include /etc/nginx/snippets/security-headers-base.conf;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()" always;
+
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+        default_type text/plain;
+    }
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# ─── PAINEL + API + WS — https://${RD_PANEL_DOMAIN} ───────────────────────────
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name ${RD_PANEL_DOMAIN};
+
+    ssl_certificate     ${RD_TLS_CERT_DIR}/${RD_PANEL_DOMAIN}/fullchain.pem;
+    ssl_certificate_key ${RD_TLS_CERT_DIR}/${RD_PANEL_DOMAIN}/privkey.pem;
+    include /etc/nginx/snippets/tls-params.conf;
+
+    include /etc/nginx/snippets/headers-admin-prod.conf;
+
+    limit_conn cl_ip 300;
+    error_page 429             = @rd_429;
+    error_page 502 503 504     = @rd_unavailable;
+
+    include /etc/nginx/snippets/loc-health.conf;
+    include /etc/nginx/snippets/loc-player-api.conf;
+
+    # OpenAPI/Swagger desligados em produção (defesa em profundidade; o backend
+    # também desliga via OPENAPI_ENABLED=false).
+    location ~ ^/(docs|redoc)(/|$)|^/openapi\.json$|^/api/v1/(docs|redoc|openapi\.json)$ {
+        return 404;
+    }
+
+    include /etc/nginx/snippets/loc-admin-api.conf;
+
+    # Painel (build estático servido pelo container frontend)
+    location / {
+        include /etc/nginx/snippets/proxy-common.conf;
+        proxy_pass http://rd_frontend;
+    }
+
+    location @rd_429 {
+        include /etc/nginx/snippets/headers-admin-prod.conf;
+        add_header Retry-After "60" always;
+        default_type application/json;
+        return 429 '{"error":{"code":"RATE_LIMITED","message":"Muitas requisições. Aguarde alguns instantes e tente novamente.","details":{}}}';
+    }
+    location @rd_unavailable {
+        include /etc/nginx/snippets/headers-admin-prod.conf;
+        add_header Retry-After "10" always;
+        default_type application/json;
+        return 503 '{"error":{"code":"UPSTREAM_UNAVAILABLE","message":"Serviço temporariamente indisponível.","details":{}}}';
+    }
+}
+
+# ─── PLAYER WEB — https://${RD_PLAYER_DOMAIN} ─────────────────────────────────
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name ${RD_PLAYER_DOMAIN};
+
+    ssl_certificate     ${RD_TLS_CERT_DIR}/${RD_PLAYER_DOMAIN}/fullchain.pem;
+    ssl_certificate_key ${RD_TLS_CERT_DIR}/${RD_PLAYER_DOMAIN}/privkey.pem;
+    include /etc/nginx/snippets/tls-params.conf;
+
+    include /etc/nginx/snippets/headers-player-prod.conf;
+
+    limit_conn cl_ip 300;
+    error_page 429             = @rd_429;
+    error_page 502 503 504     = @rd_unavailable;
+
+    include /etc/nginx/snippets/loc-health.conf;
+    include /etc/nginx/snippets/loc-player-api.conf;
+
+    location ^~ /api/ {
+        default_type application/json;
+        return 404 '{"error":{"code":"NOT_FOUND","message":"Rota inexistente nesta origem.","details":{}}}';
+    }
+    location ^~ /ws/ {
+        return 404;
+    }
+    location ~ ^/(docs|redoc|openapi\.json)(/|$) {
+        return 404;
+    }
+
+    location / {
+        include /etc/nginx/snippets/proxy-common.conf;
+        proxy_pass http://rd_player_web;
+    }
+
+    location @rd_429 {
+        include /etc/nginx/snippets/headers-player-prod.conf;
+        add_header Retry-After "60" always;
+        default_type application/json;
+        return 429 '{"error":{"code":"RATE_LIMITED","message":"Muitas requisições. Aguarde alguns instantes e tente novamente.","details":{}}}';
+    }
+    location @rd_unavailable {
+        include /etc/nginx/snippets/headers-player-prod.conf;
+        add_header Retry-After "10" always;
+        default_type application/json;
+        return 503 '{"error":{"code":"UPSTREAM_UNAVAILABLE","message":"Serviço temporariamente indisponível.","details":{}}}';
+    }
+}

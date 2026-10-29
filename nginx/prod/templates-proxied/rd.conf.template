@@ -1,0 +1,207 @@
+# =============================================================================
+# RD Mídia Indoor — nginx da INSTÂNCIA atrás de uma borda TLS COMPARTILHADA (AÇÃO 005)
+# -----------------------------------------------------------------------------
+# Usado quando VÁRIAS instâncias dividem a mesma VPS (dev, dev-teste, …): um
+# Traefik compartilhado (ops/edge/docker-compose.edge.yml) termina o TLS, emite os
+# certificados (Let's Encrypt) e encaminha HTTP para ESTE nginx pela rede Docker
+# externa da borda. Este nginx NÃO publica porta no host.
+#
+# Ativação (compose da instância): NGINX_ENVSUBST_TEMPLATE_DIR=/etc/nginx/templates-proxied
+# Instância com a própria borda TLS (porta 443 no host): prod/templates/rd.conf.template.
+#
+# Variáveis (envsubst do entrypoint oficial; só prefixo RD_):
+#   RD_PANEL_DOMAIN         painel (+ /api e /ws do painel, mesma origem — contrato do SPA)
+#   RD_API_DOMAIN           API direta (/api, /ws, /health e, se o backend habilitar, /docs)
+#   RD_PLAYER_DOMAIN        Player Web (origem separada)
+#   RD_TRUSTED_PROXY_CIDR   sub-rede da rede da borda (único par confiável p/ X-Forwarded-*)
+#
+# Regras iguais às de produção (mesmos snippets): headers/CSP/HSTS, rate limit,
+# rotas do player só na origem do player, /health/* e /metrics negados.
+# Diferenças: TLS na borda; IP real e esquema vêm SOMENTE do proxy confiável.
+# =============================================================================
+
+resolver 127.0.0.11 valid=10s ipv6=off;
+resolver_timeout 5s;
+
+# ─── Proxy confiável: SOMENTE a borda compartilhada ──────────────────────────
+# A borda remove X-Forwarded-* de clientes não confiáveis e grava o IP do cliente;
+# vale o ÚLTIMO elemento de X-Forwarded-For (real_ip_recursive off). Pares fora da
+# sub-rede da borda nunca têm X-Forwarded-* aceito (e nem alcançam esta porta).
+set_real_ip_from  ${RD_TRUSTED_PROXY_CIDR};
+real_ip_header    X-Forwarded-For;
+real_ip_recursive off;
+
+geo $realip_remote_addr $rd_trusted_proxy {
+    default                    0;
+    ${RD_TRUSTED_PROXY_CIDR}   1;
+}
+
+# Variáveis usadas por snippets/proxy-common.conf: esquema/porta públicos = os da borda.
+map "$rd_trusted_proxy:$http_x_forwarded_proto" $rd_forwarded_proto {
+    default                                     $scheme;
+    "~^1:(?:[^,]*,)*\s*(?<rd_xfp>https?)\s*$"   $rd_xfp;
+}
+map $rd_forwarded_proto $rd_forwarded_port {
+    default $server_port;
+    https   443;
+}
+
+upstream rd_backend {
+    zone rd_backend 64k;
+    server backend:8000 resolve;
+    keepalive 64;
+}
+
+upstream rd_frontend {
+    zone rd_frontend 64k;
+    server frontend:80 resolve;
+    keepalive 16;
+}
+
+upstream rd_player_web {
+    zone rd_player_web 64k;
+    server player-web:8080 resolve;
+    keepalive 16;
+}
+
+include /etc/nginx/snippets/internal-status.conf;
+
+# ─── Host desconhecido: descarta ──────────────────────────────────────────────
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+    return 444;
+}
+
+# ─── PAINEL + API + WS — https://${RD_PANEL_DOMAIN} (TLS na borda) ─────────────
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${RD_PANEL_DOMAIN};
+
+    include /etc/nginx/snippets/headers-admin-prod.conf;
+
+    limit_conn cl_ip 300;
+    error_page 429             = @rd_429;
+    error_page 502 503 504     = @rd_unavailable;
+
+    include /etc/nginx/snippets/loc-health.conf;
+    include /etc/nginx/snippets/loc-player-api.conf;
+
+    # OpenAPI/Swagger só na origem da API (RD_API_DOMAIN).
+    location ~ ^/(docs|redoc)(/|$)|^/openapi\.json$|^/api/v1/(docs|redoc|openapi\.json)$ {
+        return 404;
+    }
+
+    include /etc/nginx/snippets/loc-admin-api.conf;
+
+    location / {
+        include /etc/nginx/snippets/proxy-common.conf;
+        proxy_pass http://rd_frontend;
+    }
+
+    location @rd_429 {
+        include /etc/nginx/snippets/headers-admin-prod.conf;
+        add_header Retry-After "60" always;
+        default_type application/json;
+        return 429 '{"error":{"code":"RATE_LIMITED","message":"Muitas requisições. Aguarde alguns instantes e tente novamente.","details":{}}}';
+    }
+    location @rd_unavailable {
+        include /etc/nginx/snippets/headers-admin-prod.conf;
+        add_header Retry-After "10" always;
+        default_type application/json;
+        return 503 '{"error":{"code":"UPSTREAM_UNAVAILABLE","message":"Serviço temporariamente indisponível.","details":{}}}';
+    }
+}
+
+# ─── API DIRETA — https://${RD_API_DOMAIN} (TLS na borda) ─────────────────────
+# Mesmas rotas e limites da API do painel; sem SPA. /docs, /redoc e /openapi.json
+# seguem para o backend, que só os serve com OPENAPI_ENABLED (desligado em produção).
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${RD_API_DOMAIN};
+
+    include /etc/nginx/snippets/headers-admin-prod.conf;
+
+    limit_conn cl_ip 300;
+    error_page 429             = @rd_429;
+    error_page 502 503 504     = @rd_unavailable;
+
+    include /etc/nginx/snippets/loc-health.conf;
+    include /etc/nginx/snippets/loc-player-api.conf;
+
+    # Contrato do backend: /api/v1/docs e /api/v1/openapi.json (só com OPENAPI_ENABLED).
+    location ~ ^/api/v1/(docs|openapi\.json)(/|$) {
+        include /etc/nginx/snippets/headers-docs-local.conf;
+        limit_req zone=rl_api burst=100 nodelay;
+        include /etc/nginx/snippets/proxy-common.conf;
+        proxy_pass http://rd_backend;
+    }
+
+    include /etc/nginx/snippets/loc-admin-api.conf;
+
+    location / {
+        default_type application/json;
+        return 404 '{"error":{"code":"NOT_FOUND","message":"Rota inexistente nesta origem.","details":{}}}';
+    }
+
+    location @rd_429 {
+        include /etc/nginx/snippets/headers-admin-prod.conf;
+        add_header Retry-After "60" always;
+        default_type application/json;
+        return 429 '{"error":{"code":"RATE_LIMITED","message":"Muitas requisições. Aguarde alguns instantes e tente novamente.","details":{}}}';
+    }
+    location @rd_unavailable {
+        include /etc/nginx/snippets/headers-admin-prod.conf;
+        add_header Retry-After "10" always;
+        default_type application/json;
+        return 503 '{"error":{"code":"UPSTREAM_UNAVAILABLE","message":"Serviço temporariamente indisponível.","details":{}}}';
+    }
+}
+
+# ─── PLAYER WEB — https://${RD_PLAYER_DOMAIN} (TLS na borda) ──────────────────
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${RD_PLAYER_DOMAIN};
+
+    include /etc/nginx/snippets/headers-player-prod.conf;
+
+    limit_conn cl_ip 300;
+    error_page 429             = @rd_429;
+    error_page 502 503 504     = @rd_unavailable;
+
+    include /etc/nginx/snippets/loc-health.conf;
+    include /etc/nginx/snippets/loc-player-api.conf;
+
+    location ^~ /api/ {
+        default_type application/json;
+        return 404 '{"error":{"code":"NOT_FOUND","message":"Rota inexistente nesta origem.","details":{}}}';
+    }
+    location ^~ /ws/ {
+        return 404;
+    }
+    location ~ ^/(docs|redoc|openapi\.json)(/|$) {
+        return 404;
+    }
+
+    location / {
+        include /etc/nginx/snippets/proxy-common.conf;
+        proxy_pass http://rd_player_web;
+    }
+
+    location @rd_429 {
+        include /etc/nginx/snippets/headers-player-prod.conf;
+        add_header Retry-After "60" always;
+        default_type application/json;
+        return 429 '{"error":{"code":"RATE_LIMITED","message":"Muitas requisições. Aguarde alguns instantes e tente novamente.","details":{}}}';
+    }
+    location @rd_unavailable {
+        include /etc/nginx/snippets/headers-player-prod.conf;
+        add_header Retry-After "10" always;
+        default_type application/json;
+        return 503 '{"error":{"code":"UPSTREAM_UNAVAILABLE","message":"Serviço temporariamente indisponível.","details":{}}}';
+    }
+}

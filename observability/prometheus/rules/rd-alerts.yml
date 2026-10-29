@@ -1,0 +1,234 @@
+# =============================================================================
+# RD Mídia Indoor — alertas básicos (Prometheus → Alertmanager → e-mail).
+# Local: e-mails caem no Mailpit (http://127.0.0.1:8025). Produção: destino
+# real configurado por instância (dependência externa).
+# Lembrete operacional: queda do painel/API NÃO interrompe a reprodução — os
+# players são offline-first; alertas de players indicam perda de telemetria/sync.
+# =============================================================================
+groups:
+  - name: rd-disponibilidade
+    rules:
+      - alert: RdBackendDown
+        expr: up{job="rd-backend"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API (backend) indisponível para o Prometheus há 2 min"
+          description: "O scrape de backend:8000/metrics está falhando. Painel/API afetados; players continuam reproduzindo offline."
+
+      - alert: RdScrapeTargetDown
+        expr: up{job!="rd-backend"} == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Alvo de observabilidade {{ $labels.job }} indisponível há 5 min"
+          description: "Prometheus não consegue raspar {{ $labels.instance }}."
+
+      - alert: RdBackendMetricsSlow
+        expr: scrape_duration_seconds{job="rd-backend"} > 5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "/metrics do backend lento (> 5 s por scrape)"
+          description: "O endpoint de métricas deve ter custo O(1) por scrape (sem queries pesadas)."
+
+  - name: rd-players
+    rules:
+      - alert: RdPlayersSemConexao
+        expr: sum(rd_ws_player_connections) == 0 and on() sum(rd_screens_total{status!~"UNPAIRED|INACTIVE|DISABLED|REVOKED"}) > 0
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Nenhum player conectado por WebSocket há 30 min (há telas pareadas)"
+          description: "Telemetria/sincronização interrompidas. A reprodução local dos players continua (offline-first). Verificar backend, /ws/player e rede."
+
+  - name: rd-pipeline
+    rules:
+      # Sentinela: sempre ativo. Prova que Prometheus → Alertmanager está vivo.
+      # Roteado para "blackhole" no Alertmanager (não gera e-mail).
+      - alert: RdWatchdog
+        expr: vector(1)
+        labels:
+          severity: none
+        annotations:
+          summary: "Sentinela do pipeline de alertas"
+
+  # ─── Workers Celery (P002 §54) — sinais do /metrics da API (Redis, O(1)) ────────
+  - name: rd-workers
+    rules:
+      # BUG-QA-04: com o Redis fora a API OMITE as séries do Redis (resposta rápida) —
+      # este alerta cobre a queda e inibe (Alertmanager) os de heartbeat/broker/fila.
+      - alert: RdRedisIndisponivel
+        expr: max(rd_metrics_redis_up) == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis indisponível para a API há mais de 1 min"
+          description: "Filas Celery, beat, sessões, WebSocket e rate limit da aplicação afetados. Players seguem reproduzindo offline. Ver rd-redis (docker ps / logs)."
+
+      # As regras abaixo também disparam com a SÉRIE AUSENTE enquanto a API responde
+      # (up=1): sem isso, um /metrics sem as séries Celery nunca alertaria.
+      - alert: RdBeatSemPublicarHeartbeat
+        expr: |
+          (time() - max(rd_beat_last_heartbeat_publish_timestamp_seconds)) > 180
+            or (absent(rd_beat_last_heartbeat_publish_timestamp_seconds) and on() (max(up{job="rd-backend"}) == 1))
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Celery beat não publica o heartbeat há mais de 3 min"
+          description: "Tarefas agendadas (manifestos, PoP, financeiro, presença) não estão sendo disparadas. Verificar rd-worker-beat e o lock do RedBeat."
+
+      - alert: RdWorkerSemHeartbeat
+        expr: |
+          (time() - max(rd_worker_last_heartbeat_timestamp_seconds)) > 180
+            or (absent(rd_worker_last_heartbeat_timestamp_seconds) and on() (max(up{job="rd-backend"}) == 1))
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Nenhum worker Celery executou o heartbeat há mais de 3 min"
+          description: "Worker parado/travado ou fila default sem consumo. Ver rd_celery_queue_length e os logs do rd-worker. (Se o beat também parou, o alerta RdBeatSemPublicarHeartbeat inibe este.)"
+
+      - alert: RdFilaCeleryAcumulada
+        expr: max by (queue) (rd_celery_queue_length) > 100
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Fila Celery {{ $labels.queue }} com {{ $value }} mensagens há mais de 10 min"
+          description: "Consumo abaixo da produção (worker lento/parado ou rajada). Limite: 100 mensagens (ajustar em rd-alerts.yml)."
+
+      - alert: RdBrokerIlegivel
+        expr: |
+          max(rd_celery_broker_up) == 0
+            or (absent(rd_celery_broker_up) and on() (max(up{job="rd-backend"}) == 1))
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "A API não consegue ler o tamanho das filas no broker Redis há 2 min"
+
+      - alert: RdFalhasDeTask
+        expr: sum by (task) (increase(rd_celery_task_failures_total[15m])) > 3
+        labels:
+          severity: warning
+        annotations:
+          summary: "Task {{ $labels.task }} falhou {{ $value | printf \"%.0f\" }} vezes em 15 min"
+          description: "Ver logs do rd-worker (Loki: {compose_service=\"worker\"}) e Sentry."
+
+      - alert: RdFalhaDeTaskFinanceira
+        expr: sum by (task) (increase(rd_celery_task_failures_total{task=~"app[.]workers[.]tasks[.]financial[.].*"}[15m])) > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: "Task financeira {{ $labels.task }} falhou nos últimos 15 min"
+
+      - alert: RdRetriesExcessivos
+        expr: sum by (task) (increase(rd_celery_task_retries_total[15m])) > 20
+        labels:
+          severity: warning
+        annotations:
+          summary: "Task {{ $labels.task }} com {{ $value | printf \"%.0f\" }} retries em 15 min"
+
+  # ─── Backup e exercício de restore (sidecar backup-metrics) ─────────────────────
+  - name: rd-backup
+    rules:
+      - alert: RdBackupAtrasado
+        # sem nenhum backup ainda: conta a partir do início do agendador (instalação nova)
+        expr: |
+          (time() - (rd_backup_last_success_timestamp_seconds > 0 or rd_backup_scheduler_started_timestamp_seconds))
+            > rd_backup_max_age_seconds
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Último backup do PostgreSQL com mais de {{ with query \"max(rd_backup_max_age_seconds)\" }}{{ . | first | value | humanizeDuration }}{{ end }}"
+          description: "RPO ameaçado. Ver docker logs rd-db-backup e /backups/status.json."
+
+      - alert: RdBackupFalhou
+        expr: rd_backup_last_run_success == 0
+        labels:
+          severity: critical
+        annotations:
+          summary: "A última execução do backup do PostgreSQL falhou"
+
+      - alert: RdRestoreDrillAtrasado
+        expr: |
+          (time() - (rd_backup_restore_drill_last_timestamp_seconds > 0 or rd_backup_scheduler_started_timestamp_seconds))
+            > rd_backup_restore_drill_max_age_seconds
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Exercício de restore não executado dentro do período configurado"
+          description: "Executar: docker compose --profile ops run --rm db-restore (ops/README.md §6)."
+
+      - alert: RdRestoreDrillFalhou
+        expr: rd_backup_restore_drill_last_success == 0 and rd_backup_restore_drill_last_timestamp_seconds > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: "O último exercício de restore falhou ou divergiu ({{ $value }})"
+          description: "Ver /backups/drill/last_drill_report.txt. Backups podem não ser restauráveis."
+
+      - alert: RdBackupSemCopiaExterna
+        expr: rd_backup_offsite_required == 1 and (rd_backup_offsite_configured == 0 or rd_backup_offsite_last_success == 0)
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Cópia do backup fora da VPS ausente ou falhando"
+
+      - alert: RdBackupVolumeQuaseCheio
+        expr: rd_backup_volume_avail_bytes / rd_backup_volume_size_bytes < 0.10
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Volume de backups com menos de 10% livre"
+
+      - alert: RdMetricasDeBackupAusentes
+        expr: absent(rd_backup_last_success_timestamp_seconds)
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Métricas de backup ausentes há 15 min (sidecar backup-metrics fora?)"
+
+  # ─── Segurança da instância (AÇÃO 003) — gauges publicados pela API (/metrics) ──
+  # rd_security_integrity_ok (1/0: selos das trilhas + titulares de assento conferem),
+  # rd_security_approval_mode_version (versão do modo de aprovação financeira),
+  # rd_security_env_divergence (1 = RD_BOOTSTRAP_* diverge do modo/Master efetivos).
+  - name: rd-security
+    rules:
+      - alert: RDSecurityIntegrityFailed
+        expr: rd_security_integrity_ok == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Integridade de segurança da instância FALHOU (selos ou titulares de Admin Master)"
+          description: "Operações financeiras respondem 503 SECURITY_INTEGRITY_ALERT enquanto persistir. Rodar python -m app.cli security-verify e investigar alteração direta no banco (trilhas seladas). Reiniciar NÃO corrige."
+
+      - alert: RDSecurityApprovalModeChanged
+        expr: changes(rd_security_approval_mode_version[30m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "O modo de aprovação financeira da instância mudou nos últimos 30 min"
+          description: "Confirmar com os Admin Master que a transição ÚNICA/DUPLA veio do fluxo protegido (auditoria security.approval_mode_*). Mudança inesperada = incidente de segurança."
+
+      - alert: RDSecurityEnvDivergence
+        expr: rd_security_env_divergence == 1
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RD_BOOTSTRAP_* diverge do modo/Master efetivos da instância há 30 min"
+          description: "As variáveis de bootstrap só valem na 1ª inicialização e foram IGNORADAS. Alinhar a configuração da stack ao modo efetivo; mudança de modo só pelo painel (Configurações → Segurança da instância)."

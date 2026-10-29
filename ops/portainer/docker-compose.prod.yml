@@ -1,0 +1,668 @@
+# =============================================================================
+# RD Mídia Indoor — STACK DE PRODUÇÃO (Portainer / docker compose)
+# -----------------------------------------------------------------------------
+# UMA STACK POR INSTÂNCIA WHITE-LABEL: cada instância tem seu próprio projeto
+# (volumes, banco, Redis, segredos, domínios). Nada é compartilhado entre
+# instâncias além do host. Nenhum domínio fixo no código.
+#
+# Regras:
+#   - imagens versionadas (RD_VERSION), construídas por ops/release/build-images.sh;
+#   - SEM bind mount de código; SEM portas de PostgreSQL/Redis/observabilidade;
+#   - segredos SOMENTE como Docker secrets (arquivos em RD_SECRETS_DIR, fora do repo);
+#   - ENVIRONMENT=production (o backend recusa subir com mock/debug/docs/segredo fraco).
+#
+# Variáveis por instância: ops/portainer/instance.env.example (copiar e preencher
+# no Portainer → "Environment variables" ou --env-file). Validar sem subir:
+#   docker compose -f ops/portainer/docker-compose.prod.yml --env-file <instancia>.env config -q
+# Procedimento completo: ops/README.md §Produção (Portainer). NÃO executado nesta ação.
+# =============================================================================
+
+name: ${RD_INSTANCE:?defina RD_INSTANCE (igual ao nome da stack no Portainer)}
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "20m"
+    max-file: "5"
+
+x-backend-image: &backend-image ${RD_REGISTRY:-rd-midiaindoor}/backend:${RD_VERSION:?defina RD_VERSION}
+
+x-backend-env: &backend-env
+  ENVIRONMENT: production
+  PYTHONUNBUFFERED: "1"
+  DEBUG: "false"
+  MOCK_PAYMENT: "false"
+  OPENAPI_ENABLED: "false"
+  COOKIE_SECURE: "true"
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: ${RD_DB_NAME:-rdmidiaindoor}
+  POSTGRES_USER: rd_app
+  POSTGRES_PASSWORD_FILE: /run/secrets/db_app_password
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  REDIS_PASSWORD_FILE: /run/secrets/redis_password
+  SECRET_KEY_FILE: /run/secrets/app_secret_key
+  JWT_SECRET_KEY_FILE: /run/secrets/jwt_secret_key
+  DATA_ENCRYPTION_KEY_FILE: /run/secrets/data_encryption_key
+  CLOUDPAYPAG_BASE_URL: ${RD_CLOUDPAYPAG_BASE_URL:-https://cloudpaypag.top}
+  CLOUDPAYPAG_API_KEY_FILE: /run/secrets/cloudpaypag_api_key
+  CLOUDPAYPAG_WEBHOOK_SECRET_FILE: /run/secrets/cloudpaypag_webhook_secret
+  EMAIL_BACKEND: smtp
+  SMTP_HOST: ${RD_SMTP_HOST:?defina RD_SMTP_HOST}
+  SMTP_PORT: ${RD_SMTP_PORT:-587}
+  SMTP_USER: ${RD_SMTP_USER:-}
+  SMTP_PASSWORD_FILE: /run/secrets/smtp_password
+  SMTP_FROM: ${RD_SMTP_FROM:?defina RD_SMTP_FROM}
+  FRONTEND_URL: https://${RD_PANEL_DOMAIN:?defina RD_PANEL_DOMAIN}
+  PANEL_BASE_URL: https://${RD_PANEL_DOMAIN}
+  CORS_ORIGINS: https://${RD_PANEL_DOMAIN},https://${RD_PLAYER_DOMAIN:?defina RD_PLAYER_DOMAIN}
+  # Origens do Web Player (CORS + Origin do WS do player). O default do código contém
+  # http://localhost:8088 e a produção RECUSA subir com origem http:// → obrigatório aqui.
+  # https://player.rd.local = origem virtual da casca Windows (WebView2).
+  PLAYER_ALLOWED_ORIGINS: ${RD_PLAYER_ALLOWED_ORIGINS:?defina RD_PLAYER_ALLOWED_ORIGINS - origens https do player separadas por virgula}
+  ALLOWED_HOSTS: ${RD_PANEL_DOMAIN},${RD_PLAYER_DOMAIN}
+  # Identidade da instância no gateway (rota /api/v1/webhooks/cloudpaypag/<slug>, idempotência)
+  RD_INSTANCE_SLUG: ${RD_INSTANCE_SLUG:?defina RD_INSTANCE_SLUG - minusculas, numeros e hifen}
+  CLOUDPAYPAG_SUBCONTA_ID: ${RD_CLOUDPAYPAG_SUBCONTA_ID:-}
+  # Chave ES256 (PEM PKCS8 P-256) que assina os MANIFESTOS — obrigatória fora de dev
+  # (backend/app/modules/inventory/keys.py). Perdê-la exige re-parear todas as telas.
+  MANIFEST_SIGNING_KEY_FILE: /run/secrets/manifest_signing_key
+  # Chaves PÚBLICAS de release dos players (JSON {key_id: spki_b64url}) para /player/app-update.
+  # A chave privada de release fica OFFLINE com o proprietário (nunca na VPS).
+  PLAYER_RELEASE_PUBLIC_KEYS_FILE: /run/configs/player_release_public_keys.json
+  PROMETHEUS_ENABLED: "true"
+  SENTRY_DSN: ${RD_SENTRY_DSN:-}
+  STORAGE_PROVIDER: local
+  STORAGE_LOCAL_PATH: /app/media
+
+x-backend-secrets: &backend-secrets
+  - db_app_password
+  - redis_password
+  - app_secret_key
+  - jwt_secret_key
+  - data_encryption_key
+  - cloudpaypag_api_key
+  - cloudpaypag_webhook_secret
+  - smtp_password
+  - manifest_signing_key
+
+x-backend-configs: &backend-configs
+  - source: player_release_public_keys
+    target: /run/configs/player_release_public_keys.json
+
+networks:
+  edge:
+    driver: bridge
+  internal:
+    driver: bridge
+    internal: true          # sem rota para fora: banco/redis/observabilidade isolados
+  egress:
+    driver: bridge          # saída controlada (gateway de pagamento, SMTP, cópia externa)
+
+volumes:
+  postgres-data:
+  redis-data:
+  media-storage:
+  db-backups:
+  letsencrypt:
+  certbot-webroot:
+  prometheus-data:
+  alertmanager-data:
+  loki-data:
+  promtail-positions:
+  grafana-data:
+
+secrets:
+  postgres_superuser_password:
+    file: ${RD_SECRETS_DIR:?defina RD_SECRETS_DIR}/postgres_superuser_password
+  db_owner_password:
+    file: ${RD_SECRETS_DIR}/db_owner_password
+  db_app_password:
+    file: ${RD_SECRETS_DIR}/db_app_password
+  db_backup_password:
+    file: ${RD_SECRETS_DIR}/db_backup_password
+  redis_password:
+    file: ${RD_SECRETS_DIR}/redis_password
+  app_secret_key:
+    file: ${RD_SECRETS_DIR}/app_secret_key
+  jwt_secret_key:
+    file: ${RD_SECRETS_DIR}/jwt_secret_key
+  data_encryption_key:
+    file: ${RD_SECRETS_DIR}/data_encryption_key
+  backup_passphrase:
+    file: ${RD_SECRETS_DIR}/backup_passphrase
+  grafana_admin_password:
+    file: ${RD_SECRETS_DIR}/grafana_admin_password
+  cloudpaypag_api_key:
+    file: ${RD_SECRETS_DIR}/cloudpaypag_api_key
+  cloudpaypag_webhook_secret:
+    file: ${RD_SECRETS_DIR}/cloudpaypag_webhook_secret
+  smtp_password:
+    file: ${RD_SECRETS_DIR}/smtp_password
+  manifest_signing_key:
+    file: ${RD_SECRETS_DIR}/manifest_signing_key
+  # Senha INICIAL do Master primário (assento 1) — gerada aleatória por instância
+  # (ops/dev/generate-secrets.sh com RD_SECRETS_DIR); montada SOMENTE no serviço bootstrap.
+  bootstrap_master_password:
+    file: ${RD_SECRETS_DIR}/bootstrap_master_password
+
+configs:
+  player_release_public_keys:
+    file: ${RD_CONFIG_DIR}/player_release_public_keys.json
+  alertmanager_config:
+    file: ${RD_CONFIG_DIR:?defina RD_CONFIG_DIR}/alertmanager.yml
+
+services:
+
+  # ─── BORDA: TLS, headers de segurança, rate limit, roteamento ───────────────
+  nginx:
+    image: ${RD_REGISTRY:-rd-midiaindoor}/nginx:${RD_VERSION}
+    restart: unless-stopped
+    environment:
+      RD_PANEL_DOMAIN: ${RD_PANEL_DOMAIN}
+      RD_PLAYER_DOMAIN: ${RD_PLAYER_DOMAIN}
+      RD_TLS_CERT_DIR: /etc/letsencrypt/live
+    ports:
+      # 1 instância por VPS: 80/443 direto. Várias instâncias no mesmo host:
+      # publicar em portas internas e usar o roteador SNI compartilhado (ops/README.md).
+      - "${RD_HTTP_BIND:-80}:80"
+      - "${RD_HTTPS_BIND:-443}:443"
+    volumes:
+      - letsencrypt:/etc/letsencrypt:ro
+      - certbot-webroot:/var/www/certbot:ro
+    depends_on:
+      - backend
+      - frontend
+      - player-web
+    networks:
+      - edge
+      - internal
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M
+
+  certbot:
+    image: certbot/certbot:v5.0.0
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "-c", "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done"]
+    volumes:
+      - letsencrypt:/etc/letsencrypt
+      - certbot-webroot:/var/www/certbot
+    networks:
+      - egress
+    logging: *default-logging
+
+  frontend:
+    image: ${RD_REGISTRY:-rd-midiaindoor}/frontend:${RD_VERSION}
+    restart: unless-stopped
+    networks:
+      - internal
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+
+  player-web:
+    image: ${RD_REGISTRY:-rd-midiaindoor}/player-web:${RD_VERSION}
+    restart: unless-stopped
+    networks:
+      - internal
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+
+  # ─── APLICAÇÃO ──────────────────────────────────────────────────────────────
+  migrate:
+    image: *backend-image
+    restart: "no"
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      <<: *backend-env
+      POSTGRES_USER: rd_owner
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_owner_password
+      # migrations não assinam manifestos nem verificam releases (sem montar essas chaves)
+      MANIFEST_SIGNING_KEY_FILE: ""
+      PLAYER_RELEASE_PUBLIC_KEYS_FILE: ""
+    secrets:
+      - db_owner_password
+      - redis_password
+      - app_secret_key
+      - jwt_secret_key
+      - data_encryption_key
+      - cloudpaypag_api_key
+      - cloudpaypag_webhook_secret
+      - smtp_password
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - internal
+    logging: *default-logging
+
+  # ─── BOOTSTRAP — one-shot (AÇÃO 003): modo de aprovação + Master primário ────
+  # python -m app.cli bootstrap-instance — idempotente (0 = ok; 2 = configuração; 1 = erro).
+  # RD_BOOTSTRAP_* são lidas SÓ na 1ª inicialização (ausentes nessa hora ⇒ código 2 e
+  # backend/worker/beat não sobem); depois o modo vive no banco e o ENV é ignorado
+  # (divergência só sinalizada: alerta RDSecurityEnvDivergence). Variáveis sem valor ficam
+  # AUSENTES no container quando não definidas na stack (nunca string vazia).
+  bootstrap:
+    image: *backend-image
+    restart: "no"
+    command: ["python", "-m", "app.cli", "bootstrap-instance"]
+    environment:
+      <<: *backend-env
+      # bootstrap não assina manifestos nem verifica releases (sem montar essas chaves)
+      MANIFEST_SIGNING_KEY_FILE: ""
+      PLAYER_RELEASE_PUBLIC_KEYS_FILE: ""
+      RD_BOOTSTRAP_DUAL_MASTER_APPROVAL:
+      RD_BOOTSTRAP_MASTER_EMAIL:
+      RD_BOOTSTRAP_MASTER_NAME:
+      RD_BOOTSTRAP_MASTER_PASSWORD_FILE: /run/secrets/bootstrap_master_password
+    secrets:
+      - db_app_password
+      - redis_password
+      - app_secret_key
+      - jwt_secret_key
+      - data_encryption_key
+      - cloudpaypag_api_key
+      - cloudpaypag_webhook_secret
+      - smtp_password
+      - bootstrap_master_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - internal
+    logging: *default-logging
+
+  backend:
+    image: *backend-image
+    restart: unless-stopped
+    environment:
+      <<: *backend-env
+    secrets: *backend-secrets
+    configs: *backend-configs
+    volumes:
+      - media-storage:/app/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      bootstrap:
+        condition: service_completed_successfully
+    networks:
+      - internal
+      - egress
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+
+  worker:
+    image: *backend-image
+    restart: unless-stopped
+    stop_grace_period: 120s            # ffmpeg/tarefas longas terminam ou liberam o lease (BUG-QA-01)
+    command: celery -A app.workers.celery_app worker --loglevel=info --concurrency=${RD_WORKER_CONCURRENCY:-4} -Q ${RD_CELERY_QUEUES:-default,media,notifications,financial,reports}
+    environment:
+      <<: *backend-env
+    secrets: *backend-secrets
+    configs: *backend-configs
+    volumes:
+      - media-storage:/app/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      bootstrap:
+        condition: service_completed_successfully
+    networks:
+      - internal
+      - egress
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.workers.celery_app inspect ping -d celery@$$HOSTNAME --timeout 10 2>/dev/null | grep -q pong"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+
+  worker-beat:
+    image: *backend-image
+    restart: unless-stopped
+    command: celery -A app.workers.celery_app beat --loglevel=info --scheduler redbeat.RedBeatScheduler
+    environment:
+      <<: *backend-env
+    secrets: *backend-secrets
+    configs: *backend-configs
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      bootstrap:
+        condition: service_completed_successfully
+    networks:
+      - internal
+    logging: *default-logging
+    healthcheck:
+      # BUG-QA-03: saudável = o beat PUBLICOU o heartbeat há < 3 min. NÃO usar a existência
+      # do redbeat::lock (o lock de um beat morto sobrevive no AOF e o beat novo fica parado).
+      test: ["CMD", "python", "-m", "app.workers.observability", "beat-healthcheck", "--max-age", "180"]
+      interval: 60s
+      timeout: 20s
+      retries: 3
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+  # ─── DADOS (nunca publicados) ──────────────────────────────────────────────
+  postgres:
+    image: postgres:16.15-alpine
+    restart: unless-stopped
+    shm_size: 256m
+    environment:
+      POSTGRES_DB: ${RD_DB_NAME:-rdmidiaindoor}
+      POSTGRES_USER: ${RD_DB_SUPERUSER:-rd_super}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_superuser_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=pt_BR.UTF-8 --lc-ctype=pt_BR.UTF-8"
+    secrets:
+      - postgres_superuser_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - internal
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${RD_DB_SUPERUSER:-rd_super} -d ${RD_DB_NAME:-rdmidiaindoor}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+
+  redis:
+    image: redis:7.4.8-alpine
+    restart: unless-stopped
+    user: redis
+    command: ["sh", "-c", "umask 077; printf 'requirepass %s\\nappendonly yes\\ndir /data\\n' \"$$(cat /run/secrets/redis_password)\" > /tmp/redis.conf && exec redis-server /tmp/redis.conf"]
+    secrets:
+      - redis_password
+    volumes:
+      - redis-data:/data
+    networks:
+      - internal
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$(cat /run/secrets/redis_password)\" redis-cli ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+
+  db-init:
+    image: ${RD_REGISTRY:-rd-midiaindoor}/dbtools:${RD_VERSION}
+    restart: "no"
+    command: ["rd-db-init"]
+    environment:
+      RD_DB_NAME: ${RD_DB_NAME:-rdmidiaindoor}
+      RD_DB_SUPERUSER: ${RD_DB_SUPERUSER:-rd_super}
+      RD_DB_SUPERUSER_PASSWORD_FILE: /run/secrets/postgres_superuser_password
+      RD_DB_TRANSFER_OWNERSHIP: "on"
+    secrets:
+      - postgres_superuser_password
+      - db_owner_password
+      - db_app_password
+      - db_backup_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+    logging: *default-logging
+
+  db-backup:
+    image: ${RD_REGISTRY:-rd-midiaindoor}/dbtools:${RD_VERSION}
+    restart: unless-stopped
+    init: true
+    command: ["rd-backup-scheduler"]
+    environment:
+      TZ: America/Sao_Paulo
+      RD_DB_NAME: ${RD_DB_NAME:-rdmidiaindoor}
+      RD_BACKUP_DB_USER: rd_backup
+      RD_BACKUP_DB_PASSWORD_FILE: /run/secrets/db_backup_password
+      RD_BACKUP_PASSPHRASE_FILE: /run/secrets/backup_passphrase
+      RD_BACKUP_AT: ${RD_BACKUP_AT:-03:00}
+      RD_BACKUP_KEEP_DAILY: "7"
+      RD_BACKUP_KEEP_WEEKLY: "4"
+      RD_BACKUP_KEEP_MONTHLY: "3"
+      RD_BACKUP_COUNT_ROWS: ${RD_BACKUP_COUNT_ROWS:-1}
+      # Cópia FORA da VPS (dependência externa). Ex.: rclone copy "$1" destino:rd/${RD_INSTANCE}/
+      RD_BACKUP_OFFSITE_CMD: ${RD_BACKUP_OFFSITE_CMD:-}
+    secrets:
+      - db_backup_password
+      - backup_passphrase
+    volumes:
+      - db-backups:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - internal
+      - egress
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "rd-backup-healthcheck"]
+      interval: 5m
+      timeout: 10s
+      retries: 1
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+
+
+  backup-metrics:
+    image: ${RD_REGISTRY:-rd-midiaindoor}/dbtools:${RD_VERSION}
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=1m
+    command: ["rd-backup-metrics"]
+    environment:
+      TZ: America/Sao_Paulo
+      RD_METRICS_PORT: "9101"
+      RD_BACKUP_MAX_AGE_H: "26"
+      RD_DRILL_MAX_AGE_DAYS: ${RD_DRILL_MAX_AGE_DAYS:-35}
+      RD_BACKUP_OFFSITE_REQUIRED: "true"
+    volumes:
+      - db-backups:/backups:ro
+    networks:
+      - internal
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9101/metrics.prom"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 32M
+
+  db-restore:
+    image: ${RD_REGISTRY:-rd-midiaindoor}/dbtools:${RD_VERSION}
+    profiles: ["ops"]
+    restart: "no"
+    command: ["rd-restore-drill"]
+    environment:
+      TZ: America/Sao_Paulo
+      RD_DB_NAME: ${RD_DB_NAME:-rdmidiaindoor}
+      RD_DB_SUPERUSER: ${RD_DB_SUPERUSER:-rd_super}
+      RD_DB_SUPERUSER_PASSWORD_FILE: /run/secrets/postgres_superuser_password
+      RD_BACKUP_PASSPHRASE_FILE: /run/secrets/backup_passphrase
+    secrets:
+      - postgres_superuser_password
+      - backup_passphrase
+    volumes:
+      - db-backups:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+    logging: *default-logging
+
+  # ─── OBSERVABILIDADE (portas não publicadas; Grafana só em loopback) ────────
+  prometheus:
+    image: ${RD_REGISTRY:-rd-midiaindoor}/prometheus:${RD_VERSION}
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${RD_PROMETHEUS_RETENTION:-15d}
+      - --storage.tsdb.retention.size=${RD_PROMETHEUS_RETENTION_SIZE:-5GB}
+    volumes:
+      - prometheus-data:/prometheus
+    networks:
+      - internal
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+
+  alertmanager:
+    image: ${RD_REGISTRY:-rd-midiaindoor}/alertmanager:${RD_VERSION}
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/alertmanager/rd-instance.yml
+      - --storage.path=/alertmanager
+      - --cluster.listen-address=
+    configs:
+      - source: alertmanager_config
+        target: /etc/alertmanager/rd-instance.yml
+    volumes:
+      - alertmanager-data:/alertmanager
+    networks:
+      - internal
+      - egress
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
+  loki:
+    image: ${RD_REGISTRY:-rd-midiaindoor}/loki:${RD_VERSION}
+    restart: unless-stopped
+    volumes:
+      - loki-data:/loki
+    networks:
+      - internal
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+
+  promtail:
+    image: ${RD_REGISTRY:-rd-midiaindoor}/promtail:${RD_VERSION}
+    restart: unless-stopped
+    environment:
+      RD_COMPOSE_PROJECT: ${RD_INSTANCE}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - promtail-positions:/promtail
+    networks:
+      - internal
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
+  grafana:
+    image: ${RD_REGISTRY:-rd-midiaindoor}/grafana:${RD_VERSION}
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_admin_password
+      GF_SECURITY_DISABLE_GRAVATAR: "true"
+      GF_SECURITY_COOKIE_SAMESITE: strict
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+      GF_PLUGINS_PREINSTALL_DISABLED: "true"
+      GF_DATE_FORMATS_DEFAULT_TIMEZONE: America/Sao_Paulo
+    secrets:
+      - grafana_admin_password
+    volumes:
+      - grafana-data:/var/lib/grafana
+    ports:
+      # acesso via túnel SSH (ssh -L 3005:127.0.0.1:<porta> vps); nunca público
+      - "127.0.0.1:${RD_GRAFANA_PORT:-3005}:3000"
+    networks:
+      - internal
+      - edge
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M

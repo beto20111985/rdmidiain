@@ -1,0 +1,409 @@
+# =============================================================================
+# Testes unitários das regras de alerta (promtool test rules) — simulação, sem parar
+# serviços. Rodar:
+#   docker run --rm --entrypoint promtool -v <repo>/observability/prometheus:/p:ro \
+#     prom/prometheus:v3.5.0 test rules /p/tests/rd-alerts.test.yml
+# Tempo da avaliação começa em 0 (unix 0); timestamps em segundos. Os limites de backup
+# e de drill vêm de gauges de configuração (rd_*_max_age_seconds), por isso os testes
+# usam limites curtos (30 min / 1 h) com a MESMA expressão usada em produção (26 h / 35 d).
+# =============================================================================
+rule_files:
+  - ../rules/rd-alerts.yml
+
+evaluation_interval: 30s
+
+tests:
+  # ─── Worker sem heartbeat; beat OK ─────────────────────────────────────────
+  - interval: 30s
+    input_series:
+      # beat publica a cada 60 s (timestamp acompanha o relógio)
+      - series: 'rd_beat_last_heartbeat_publish_timestamp_seconds{job="rd-backend"}'
+        values: '0+30x40'
+      # worker executou pela última vez em t=60 s e parou
+      - series: 'rd_worker_last_heartbeat_timestamp_seconds{job="rd-backend"}'
+        values: '0 30 60 60x40'
+    alert_rule_test:
+      - eval_time: 3m          # 120 s sem heartbeat: ainda não
+        alertname: RdWorkerSemHeartbeat
+        exp_alerts: []
+      - eval_time: 6m          # > 180 s desde 270 s e 'for: 1m' cumprido
+        alertname: RdWorkerSemHeartbeat
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+            exp_annotations:
+              summary: "Nenhum worker Celery executou o heartbeat há mais de 3 min"
+              description: "Worker parado/travado ou fila default sem consumo. Ver rd_celery_queue_length e os logs do rd-worker. (Se o beat também parou, o alerta RdBeatSemPublicarHeartbeat inibe este.)"
+      - eval_time: 6m
+        alertname: RdBeatSemPublicarHeartbeat
+        exp_alerts: []
+
+  # ─── Beat parado ───────────────────────────────────────────────────────────
+  - interval: 30s
+    input_series:
+      - series: 'rd_beat_last_heartbeat_publish_timestamp_seconds{job="rd-backend"}'
+        values: '0 30 30x40'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: RdBeatSemPublicarHeartbeat
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+            exp_annotations:
+              summary: "Celery beat não publica o heartbeat há mais de 3 min"
+              description: "Tarefas agendadas (manifestos, PoP, financeiro, presença) não estão sendo disparadas. Verificar rd-worker-beat e o lock do RedBeat."
+
+  # ─── Fila acumulada > 100 por > 10 min; outra fila normal ─────────────────
+  - interval: 1m
+    input_series:
+      - series: 'rd_celery_queue_length{job="rd-backend",queue="media"}'
+        values: '0 150x20'
+      - series: 'rd_celery_queue_length{job="rd-backend",queue="default"}'
+        values: '0 5x20'
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: RdFilaCeleryAcumulada
+        exp_alerts: []
+      - eval_time: 12m
+        alertname: RdFilaCeleryAcumulada
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              queue: media
+            exp_annotations:
+              summary: "Fila Celery media com 150 mensagens há mais de 10 min"
+              description: "Consumo abaixo da produção (worker lento/parado ou rajada). Limite: 100 mensagens (ajustar em rd-alerts.yml)."
+
+  # ─── Falhas de task (genérica e financeira) ────────────────────────────────
+  - interval: 1m
+    input_series:
+      - series: 'rd_celery_task_failures_total{job="rd-backend",task="app.workers.tasks.media.process"}'
+        values: '0 0 2 4 6 8 8 8 8 8 8 8 8 8 8 8'
+      - series: 'rd_celery_task_failures_total{job="rd-backend",task="app.workers.tasks.financial.reconcile_daily"}'
+        values: '0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1'
+      - series: 'rd_celery_task_retries_total{job="rd-backend",task="app.workers.tasks.notifications.send"}'
+        values: '0+3x15'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: RdFalhasDeTask
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              task: app.workers.tasks.media.process
+            exp_annotations:
+              summary: "Task app.workers.tasks.media.process falhou 8 vezes em 15 min"
+              description: "Ver logs do rd-worker (Loki: {compose_service=\"worker\"}) e Sentry."
+      - eval_time: 6m
+        alertname: RdFalhaDeTaskFinanceira
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              task: app.workers.tasks.financial.reconcile_daily
+            exp_annotations:
+              summary: "Task financeira app.workers.tasks.financial.reconcile_daily falhou nos últimos 15 min"
+      - eval_time: 15m
+        alertname: RdRetriesExcessivos
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              task: app.workers.tasks.notifications.send
+            exp_annotations:
+              summary: "Task app.workers.tasks.notifications.send com 45 retries em 15 min"
+
+  # ─── Backup atrasado: o limite vem do gauge rd_backup_max_age_seconds (aqui 30 min) ─
+  - interval: 1m
+    input_series:
+      - series: 'rd_backup_last_success_timestamp_seconds{job="rd-backup"}'
+        values: '60x90'
+      - series: 'rd_backup_scheduler_started_timestamp_seconds{job="rd-backup"}'
+        values: '1x90'
+      - series: 'rd_backup_max_age_seconds{job="rd-backup"}'
+        values: '1800x90'
+      - series: 'rd_backup_last_run_success{job="rd-backup"}'
+        values: '1x90'
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: RdBackupAtrasado
+        exp_alerts: []
+      - eval_time: 40m
+        alertname: RdBackupAtrasado
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              job: rd-backup
+            exp_annotations:
+              summary: "Último backup do PostgreSQL com mais de 30m 0s"
+              description: "RPO ameaçado. Ver docker logs rd-db-backup e /backups/status.json."
+      - eval_time: 40m
+        alertname: RdBackupFalhou
+        exp_alerts: []
+
+  # ─── Instalação nova: nenhum backup ainda — conta desde o início do agendador ─
+  - interval: 1m
+    input_series:
+      - series: 'rd_backup_last_success_timestamp_seconds{job="rd-backup"}'
+        values: '0x90'
+      - series: 'rd_backup_scheduler_started_timestamp_seconds{job="rd-backup"}'
+        values: '1200x90'
+      - series: 'rd_backup_max_age_seconds{job="rd-backup"}'
+        values: '1800x90'
+    alert_rule_test:
+      - eval_time: 45m         # 25 min desde o início do agendador: ainda não
+        alertname: RdBackupAtrasado
+        exp_alerts: []
+      - eval_time: 60m         # 40 min > 30 min (e for: 5m)
+        alertname: RdBackupAtrasado
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              job: rd-backup
+            exp_annotations:
+              summary: "Último backup do PostgreSQL com mais de 30m 0s"
+              description: "RPO ameaçado. Ver docker logs rd-db-backup e /backups/status.json."
+
+  # ─── Backup falhou; drill atrasado (limite do gauge: 1 h) e drill com divergência ─
+  - interval: 1m
+    input_series:
+      - series: 'rd_backup_last_run_success{job="rd-backup"}'
+        values: '0x120'
+      - series: 'rd_backup_restore_drill_last_timestamp_seconds{job="rd-backup"}'
+        values: '60x120'
+      - series: 'rd_backup_scheduler_started_timestamp_seconds{job="rd-backup"}'
+        values: '1x120'
+      - series: 'rd_backup_restore_drill_max_age_seconds{job="rd-backup"}'
+        values: '3600x120'
+      - series: 'rd_backup_restore_drill_last_success{job="rd-backup"}'
+        values: '0x120'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: RdBackupFalhou
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              job: rd-backup
+            exp_annotations:
+              summary: "A última execução do backup do PostgreSQL falhou"
+      - eval_time: 60m
+        alertname: RdRestoreDrillAtrasado
+        exp_alerts: []
+      - eval_time: 70m
+        alertname: RdRestoreDrillAtrasado
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              job: rd-backup
+            exp_annotations:
+              summary: "Exercício de restore não executado dentro do período configurado"
+              description: "Executar: docker compose --profile ops run --rm db-restore (ops/README.md §6)."
+      - eval_time: 2m
+        alertname: RdRestoreDrillFalhou
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              job: rd-backup
+            exp_annotations:
+              summary: "O último exercício de restore falhou ou divergiu (0)"
+              description: "Ver /backups/drill/last_drill_report.txt. Backups podem não ser restauráveis."
+
+  # ─── Cópia externa obrigatória e ausente (produção) ───────────────────────
+  - interval: 1m
+    input_series:
+      - series: 'rd_backup_offsite_required{job="rd-backup"}'
+        values: '1x60'
+      - series: 'rd_backup_offsite_configured{job="rd-backup"}'
+        values: '0x60'
+      - series: 'rd_backup_offsite_last_success{job="rd-backup"}'
+        values: '0x60'
+    alert_rule_test:
+      - eval_time: 50m
+        alertname: RdBackupSemCopiaExterna
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              job: rd-backup
+            exp_annotations:
+              summary: "Cópia do backup fora da VPS ausente ou falhando"
+
+  # ─── Dev: cópia externa não obrigatória → sem alerta ──────────────────────
+  - interval: 1m
+    input_series:
+      - series: 'rd_backup_offsite_required{job="rd-backup"}'
+        values: '0x60'
+      - series: 'rd_backup_offsite_configured{job="rd-backup"}'
+        values: '0x60'
+      - series: 'rd_backup_offsite_last_success{job="rd-backup"}'
+        values: '0x60'
+    alert_rule_test:
+      - eval_time: 50m
+        alertname: RdBackupSemCopiaExterna
+        exp_alerts: []
+
+  # ─── BUG-QA-04: Redis fora — API no ar (up=1), redis_up=0 e séries Celery AUSENTES ─
+  - interval: 30s
+    input_series:
+      - series: 'up{job="rd-backend"}'
+        values: '1x20'
+      - series: 'rd_metrics_redis_up{job="rd-backend"}'
+        values: '1 1 0x18'
+    alert_rule_test:
+      - eval_time: 1m          # 30 s com redis_up=0: ainda pending
+        alertname: RdRedisIndisponivel
+        exp_alerts: []
+      - eval_time: 2m
+        alertname: RdRedisIndisponivel
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+            exp_annotations:
+              summary: "Redis indisponível para a API há mais de 1 min"
+              description: "Filas Celery, beat, sessões, WebSocket e rate limit da aplicação afetados. Players seguem reproduzindo offline. Ver rd-redis (docker ps / logs)."
+      # séries ausentes com a API no ar → heartbeat e broker também alertam
+      # (o Alertmanager os inibe enquanto RdRedisIndisponivel estiver ativo)
+      - eval_time: 2m
+        alertname: RdWorkerSemHeartbeat
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+            exp_annotations:
+              summary: "Nenhum worker Celery executou o heartbeat há mais de 3 min"
+              description: "Worker parado/travado ou fila default sem consumo. Ver rd_celery_queue_length e os logs do rd-worker. (Se o beat também parou, o alerta RdBeatSemPublicarHeartbeat inibe este.)"
+      - eval_time: 2m
+        alertname: RdBeatSemPublicarHeartbeat
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+            exp_annotations:
+              summary: "Celery beat não publica o heartbeat há mais de 3 min"
+              description: "Tarefas agendadas (manifestos, PoP, financeiro, presença) não estão sendo disparadas. Verificar rd-worker-beat e o lock do RedBeat."
+      - eval_time: 3m
+        alertname: RdBrokerIlegivel
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: "A API não consegue ler o tamanho das filas no broker Redis há 2 min"
+
+  # ─── API fora (up=0): séries ausentes NÃO geram alertas de worker (cobre RdBackendDown) ─
+  - interval: 30s
+    input_series:
+      - series: 'up{job="rd-backend"}'
+        values: '0x20'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: RdWorkerSemHeartbeat
+        exp_alerts: []
+      - eval_time: 5m
+        alertname: RdBeatSemPublicarHeartbeat
+        exp_alerts: []
+      - eval_time: 5m
+        alertname: RdBrokerIlegivel
+        exp_alerts: []
+      - eval_time: 5m
+        alertname: RdRedisIndisponivel
+        exp_alerts: []
+      - eval_time: 5m
+        alertname: RdBackendDown
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              job: rd-backend
+            exp_annotations:
+              summary: "API (backend) indisponível para o Prometheus há 2 min"
+              description: "O scrape de backend:8000/metrics está falhando. Painel/API afetados; players continuam reproduzindo offline."
+
+  # ─── Tudo saudável: nenhum falso positivo ─────────────────────────────────
+  - interval: 30s
+    input_series:
+      - series: 'up{job="rd-backend"}'
+        values: '1x20'
+      - series: 'rd_metrics_redis_up{job="rd-backend"}'
+        values: '1x20'
+      - series: 'rd_celery_broker_up{job="rd-backend"}'
+        values: '1x20'
+      - series: 'rd_worker_last_heartbeat_timestamp_seconds{job="rd-backend"}'
+        values: '0+30x20'
+      - series: 'rd_beat_last_heartbeat_publish_timestamp_seconds{job="rd-backend"}'
+        values: '0+30x20'
+    alert_rule_test:
+      - eval_time: 9m
+        alertname: RdRedisIndisponivel
+        exp_alerts: []
+      - eval_time: 9m
+        alertname: RdWorkerSemHeartbeat
+        exp_alerts: []
+      - eval_time: 9m
+        alertname: RdBeatSemPublicarHeartbeat
+        exp_alerts: []
+      - eval_time: 9m
+        alertname: RdBrokerIlegivel
+        exp_alerts: []
+
+
+  # ─── Segurança da instância (AÇÃO 003) ─────────────────────────────────────
+  # integridade cai em t=60 s; 'for: 5m' ⇒ dispara a partir de ~6 min
+  - interval: 30s
+    input_series:
+      - series: 'rd_security_integrity_ok{job="rd-backend"}'
+        values: '1 1 0x40'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: RDSecurityIntegrityFailed
+        exp_alerts: []
+      - eval_time: 7m
+        alertname: RDSecurityIntegrityFailed
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              job: rd-backend
+            exp_annotations:
+              summary: "Integridade de segurança da instância FALHOU (selos ou titulares de Admin Master)"
+              description: "Operações financeiras respondem 503 SECURITY_INTEGRITY_ALERT enquanto persistir. Rodar python -m app.cli security-verify e investigar alteração direta no banco (trilhas seladas). Reiniciar NÃO corrige."
+
+  # modo muda de versão 1 → 2 em t=5,5 min: alerta durante a janela de 30 min, depois some
+  - interval: 30s
+    input_series:
+      - series: 'rd_security_approval_mode_version{job="rd-backend"}'
+        values: '1x10 2x100'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: RDSecurityApprovalModeChanged
+        exp_alerts: []
+      - eval_time: 10m
+        alertname: RDSecurityApprovalModeChanged
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              job: rd-backend
+            exp_annotations:
+              summary: "O modo de aprovação financeira da instância mudou nos últimos 30 min"
+              description: "Confirmar com os Admin Master que a transição ÚNICA/DUPLA veio do fluxo protegido (auditoria security.approval_mode_*). Mudança inesperada = incidente de segurança."
+      - eval_time: 40m
+        alertname: RDSecurityApprovalModeChanged
+        exp_alerts: []
+
+  # divergência de ENV a partir de t=2 min: só alerta após 30 min contínuos
+  - interval: 30s
+    input_series:
+      - series: 'rd_security_env_divergence{job="rd-backend"}'
+        values: '0x3 1x100'
+      - series: 'rd_security_integrity_ok{job="rd-backend"}'
+        values: '1x100'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: RDSecurityEnvDivergence
+        exp_alerts: []
+      - eval_time: 35m
+        alertname: RDSecurityEnvDivergence
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              job: rd-backend
+            exp_annotations:
+              summary: "RD_BOOTSTRAP_* diverge do modo/Master efetivos da instância há 30 min"
+              description: "As variáveis de bootstrap só valem na 1ª inicialização e foram IGNORADAS. Alinhar a configuração da stack ao modo efetivo; mudança de modo só pelo painel (Configurações → Segurança da instância)."
+      - eval_time: 35m
+        alertname: RDSecurityIntegrityFailed
+        exp_alerts: []
+      - eval_time: 35m
+        alertname: RDSecurityApprovalModeChanged
+        exp_alerts: []

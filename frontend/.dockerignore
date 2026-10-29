@@ -1,0 +1,30 @@
+# =============================================================================
+# Contexto de build do frontend (painel React/Vite).
+# node_modules do host (Windows) NUNCA entra: o stage deps instala as
+# dependências Linux dentro da imagem.
+# =============================================================================
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+.cache/
+playwright-report/
+test-results/
+*.tsbuildinfo
+*.log
+.eslintcache
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Arquivos de build não precisam estar dentro da imagem
+Dockerfile
+.dockerignore

@@ -1,0 +1,5 @@
+# Contexto ./ops (imagem dbtools): somente db/ e backup/ são usados.
+*
+!db/roles.sql
+!db/db-init.sh
+!backup/*.sh

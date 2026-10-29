@@ -1,0 +1,15 @@
+# Scripts e configs que rodam em containers Linux precisam de LF (CRLF quebra sh/nginx).
+* text=auto
+*.sh        text eol=lf
+*.sql       text eol=lf
+*.conf      text eol=lf
+*.template  text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+Dockerfile  text eol=lf
+*.mjs       text eol=lf
+*.ps1       text eol=crlf
+*.png binary
+*.jpg binary
+*.mp4 binary
+*.gpg binary

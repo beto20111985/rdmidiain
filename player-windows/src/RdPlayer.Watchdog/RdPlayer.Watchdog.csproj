@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Processo companheiro: supervisiona a casca (heartbeat por named pipe), reinicia se travar/morrer,
+       aplica atualizações (troca de slots) com rollback. Sem UI e sem WinForms → permite trimming. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <AssemblyName>RdPlayer.Watchdog</AssemblyName>
+    <RootNamespace>RdPlayer.Watchdog</RootNamespace>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <PlatformTarget>x64</PlatformTarget>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <UseSystemResourceKeys>true</UseSystemResourceKeys>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\RdPlayer.Core\RdPlayer.Core.csproj" />
+  </ItemGroup>
+</Project>

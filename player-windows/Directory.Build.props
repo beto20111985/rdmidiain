@@ -1,0 +1,25 @@
+<Project>
+  <!-- Propriedades comuns da solução RdPlayer (Player Windows — RD Mídia Indoor). -->
+  <PropertyGroup>
+    <RdPlayerVersion>1.0.0</RdPlayerVersion>
+    <Version>$(RdPlayerVersion)</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <InformationalVersion>$(RdPlayerVersion)</InformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <Company>RD Mídia Indoor</Company>
+    <Product>RD Mídia Indoor Player (Windows)</Product>
+    <Copyright>RD Mídia Indoor</Copyright>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Deterministic>true</Deterministic>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <SatelliteResourceLanguages>pt-BR</SatelliteResourceLanguages>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <PublishDocumentationFiles>false</PublishDocumentationFiles>
+    <PublishReferencesDocumentationFiles>false</PublishReferencesDocumentationFiles>
+    <!-- CA1416: APIs de Windows são usadas em código protegido por OperatingSystem.IsWindows() ou em projetos net8.0-windows. -->
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+  </PropertyGroup>
+</Project>

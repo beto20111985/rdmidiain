@@ -1,0 +1,43 @@
+{
+ "_source": "https://cloudpaypag.top/api-docs — snapshot textual 2026-10-07T17:26Z (sha256 HTML 16f53f4b30818087b1497d4cb355451a61b646736b60c3fbb4db6646de17aeab); exemplos copiados literalmente (linhas indicadas) para testes de contrato",
+ "webhook_paid_example": {
+  "lines": "509-526",
+  "raw": "{\n  \"transaction_id\": \"cmnyvoo2s0f0y7707k3yjxfch\",\n  \"external_ref\": \"sc_2_74adb8287c5a486\",\n  \"order_id\": \"ORD-2026-001\",\n  \"method\": \"pix\",\n  \"amount\": 99.90,\n  \"fee\": 2.99,\n  \"net_value\": 96.91,\n  \"currency\": \"BRL\",\n  \"status\": \"paid\",\n  \"pix_end_to_end_id\": \"E9999901012026050718000000000001\",\n  \"cloudpaypag\": {\n    \"version\": 1,\n    \"webhook_event_id\": 42,\n    \"internal_transaction_id\": 106,\n    \"subconta_id\": 2\n  }\n}"
+ },
+ "hmac_simulator_example": {
+  "lines": "708-717",
+  "raw": "{\n  \"transaction_id\": \"abc123\",\n  \"status\": \"paid\",\n  \"amount\": 99.90,\n  \"cloudpaypag\": {\n    \"version\": 1,\n    \"webhook_event_id\": 42,\n    \"subconta_id\": 2\n  }\n}"
+ },
+ "charge_request_pix_full": {
+  "lines": "175-189",
+  "raw": "{\n  \"payment_method\": \"pix\",\n  \"amount\": 99.90,\n  \"description\": \"Pedido #1234\",\n  \"order_id\": \"ORD-2026-001\",\n  \"customer\": {\n    \"name\": \"Maria Oliveira\",\n    \"email\": \"maria@empresa.com\",\n    \"phone\": \"11987654321\",\n    \"document\": {\n      \"type\": \"CPF\",\n      \"number\": \"98765432100\"\n    }\n  }\n}"
+ },
+ "charge_response": {
+  "lines": "192-207",
+  "raw": "{\n  \"transaction_id\": 106,\n  \"order_id\": \"ORD-2026-001\",\n  \"external_ref\": \"sc_2_74adb8287c5a486\",\n  \"processor_reference_id\": \"cmnyvoo2s0f0y7707k3yjxfch\",\n  \"payment_method\": \"pix\",\n  \"status\": \"pending\",\n  \"amount\": 99.90,\n  \"pix_end_to_end_id\": null,\n  \"created_at\": \"2026-05-06T19:00:00.000000+00:00\",\n  \"next_action\": null,\n  \"attempts_count\": 1,\n  \"method_data\": {\n    \"qr_code\": \"00020101021226800014br.gov.bcb.pix...\"\n  }\n}"
+ },
+ "saldo_response": {
+  "lines": "115-121",
+  "raw": "{\n  \"subconta_id\": 2,\n  \"external_id\": \"abc123xyz\",\n  \"saldo_disponivel\": 850.00,\n  \"saldo_bloqueado\": 50.00,\n  \"saldo_total\": 900.00\n}"
+ },
+ "withdrawal_response": {
+  "lines": "281-292",
+  "raw": "{\n  \"withdrawal_id\": 15,\n  \"external_id\": \"wd_sc2_4fa3b2c1\",\n  \"status\": \"processing\",\n  \"valor\": 100.00,\n  \"taxa\": 2.00,\n  \"valor_liquido\": 98.00,\n  \"requested_gateway_config_id\": 1,\n  \"executed_gateway_config_id\": 1,\n  \"processor_reference_id\": \"transfer_xyz\",\n  \"created_at\": \"2026-05-06T19:00:00.000000+00:00\"\n}"
+ },
+ "simulate_response": {
+  "lines": "312-321",
+  "raw": "{\n  \"valor\": 100.00,\n  \"taxa\": 2.00,\n  \"valor_liquido\": 98.00,\n  \"saldo_disponivel\": 850.00,\n  \"suficiente_saldo_subconta\": true,\n  \"saque_operacionalmente_apto\": true,\n  \"suficiente\": true,\n  \"chave_propria\": false\n}"
+ },
+ "withdrawal_get_response": {
+  "lines": "338-350",
+  "raw": "{\n  \"withdrawal_id\": 15,\n  \"external_id\": \"wd_sc2_4fa3b2c1\",\n  \"status\": \"completed\",\n  \"valor\": 100.00,\n  \"taxa\": 2.00,\n  \"valor_liquido\": 98.00,\n  \"processor_reference_id\": \"transfer_xyz\",\n  \"comprovante_url\": null,\n  \"failure_reason\": null,\n  \"created_at\": \"2026-05-06T19:00:00.000000+00:00\",\n  \"processed_at\": \"2026-05-06T19:01:23.000000+00:00\"\n}"
+ },
+ "block_response": {
+  "lines": "424-435",
+  "raw": "{\n  \"block_id\": \"apiblk_2_reserva-2026-09-01\",\n  \"external_id\": \"reserva-2026-09-01\",\n  \"operation\": \"block\",\n  \"amount\": 100.00,\n  \"status\": \"completed\",\n  \"idempotent_replay\": false,\n  \"saldo_disponivel\": 750.00,\n  \"saldo_bloqueado\": 150.00,\n  \"api_blocked_total\": 100.00,\n  \"created_at\": \"2026-09-01T09:00:00.000000+00:00\"\n}"
+ },
+ "me_response": {
+  "lines": "71-76",
+  "raw": "{\n  \"subconta_id\": 2,\n  \"external_id\": \"abc123xyz\",\n  \"email\": \"contato@empresa.com.br\",\n  \"status\": \"aprovada\"\n}"
+ }
+}

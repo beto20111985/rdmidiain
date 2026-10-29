@@ -1,0 +1,46 @@
+# =============================================================================
+# Contexto de build do backend (FastAPI/Celery).
+# Fora da imagem: segredos, mídia enviada em runtime, caches, cobertura, logs.
+# tests/ PERMANECE no contexto (o target development e a imagem de testes o usam);
+# recomendação ao dono do backend/Dockerfile: o target production deve copiar só
+# app/, migrations/, alembic.ini (ou remover tests/) — ver ops/README.md.
+# =============================================================================
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+# credenciais de contas de TESTE locais (CLI dev-only) — nunca em imagem
+.devtest/
+
+# mídia enviada em runtime (volume media-storage em /app/media)
+media/
+
+# caches e artefatos de teste
+**/__pycache__/
+**/*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+tests/**/fixtures/large/
+tests/**/*.mp4
+tests/**/*.mov
+
+# ambiente/IDE
+.venv/
+venv/
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Arquivos de build não precisam estar dentro da imagem
+Dockerfile
+.dockerignore

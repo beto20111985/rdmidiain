@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Lógica pura (sem UI) — compila e é testada em Linux (container dotnet/sdk:8.0). -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>RdPlayer.Core</RootNamespace>
+    <AssemblyName>RdPlayer.Core</AssemblyName>
+    <IsTrimmable>true</IsTrimmable>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="RdPlayer.Tests" />
+  </ItemGroup>
+</Project>

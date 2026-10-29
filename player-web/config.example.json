@@ -1,0 +1,6 @@
+{
+  "_comentario": "Opcional. Copie para public/config.json (ou sirva como ./config.json junto ao bundle) quando a API NÃO estiver na mesma origem do player. Sem este arquivo, o player usa window.location (proxy same-origin de /api/v1/player/** e /ws/player/**). Na casca Windows a configuração vem de window.RD_NATIVE.config.",
+  "api_base_url": "https://api.exemplo.com.br",
+  "ws_base_url": "wss://api.exemplo.com.br",
+  "panel_url": "https://painel.exemplo.com.br"
+}

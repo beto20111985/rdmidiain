@@ -1,0 +1,18 @@
+# Gradle / Android
+.gradle/
+.kotlin/
+build/
+app/build/
+local.properties
+*.iml
+.idea/
+captures/
+.externalNativeBuild/
+.cxx/
+# Chaves e segredos (NUNCA versionar)
+keystore/
+*.jks
+*.keystore
+dev.properties
+# Artefatos gerados
+dist/
