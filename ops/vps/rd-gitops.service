@@ -1,0 +1,10 @@
+# RD Mídia Indoor — GitOps da VPS (AÇÃO 005). Instalar em /etc/systemd/system/ (ops/README.md §12).
+[Unit]
+Description=RD Midia Indoor - redeploy das stacks Git do Portainer quando o branch muda
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/rd-midiaindoor/repo/ops/vps/rd-gitops-poll.sh
+TimeoutStartSec=120

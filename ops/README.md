@@ -569,16 +569,32 @@ I=/opt/rd-midiaindoor/instancias/rd-dev
 install -d -m 700 $I/secrets $I/config
 RD_SECRETS_DIR=$I/secrets bash ops/dev/generate-secrets.sh       # + manifest_signing_key
 # segredo do provedor FALSO (assina/valida webhooks simulados) — 64 alfanuméricos
-( umask 077; openssl rand -base64 96 | tr -dc 'A-Za-z0-9' | cut -c1-64 > $I/secrets/cloudpaypag_webhook_secret )
+( umask 077; openssl rand -base64 96 | tr -dc 'A-Za-z0-9' | head -c 64 > $I/secrets/cloudpaypag_webhook_secret )
+# 0444 como os demais (generate-secrets.sh): fora do Swarm o segredo é bind mount com dono/modo
+# do host e o backend roda como "rdapp" — com 0600 a configuração recusa carregar.
+chmod 444 $I/secrets/cloudpaypag_webhook_secret
 echo '{}' > $I/config/player_release_public_keys.json
 # alertmanager.yml: smarthost mailpit:1025 sem TLS (alertas no Mailpit da instância)
 ```
 
 Portainer → Stacks → Add stack → **Repository**: URL do repositório, referência `refs/heads/dev`,
 compose `docker-compose.dev-online.yml`, variáveis de `ops/portainer/dev-online.env.example`
-preenchidas, **GitOps updates** (polling) ligado → cada push no branch `dev` reconstrói e
-reimplanta a instância. A borda: stack `rd-edge` (mesmo repositório, `ops/edge/docker-compose.edge.yml`),
+preenchidas. A borda: stack `rd-edge` (mesmo repositório, `ops/edge/docker-compose.edge.yml`),
 implantada **antes** das instâncias (cria a rede `rd-edge`).
+
+**GitOps (push no `dev` → deploy):** o polling nativo do Portainer CE 2.45.2 NÃO disparou nas stacks
+criadas pela API (AÇÃO 005: `AutoUpdate` gravado, `JobID` vazio, nenhum redeploy em 19 min). Por isso
+o host roda `ops/vps/rd-gitops-poll.sh` por timer do systemd (2 min): compara o commit do branch com o
+`ConfigHash` de cada stack e chama `PUT /api/stacks/{id}/git/redeploy` do Portainer (o deploy continua
+sendo do Portainer, a partir do Git). A borda só é reimplantada se `ops/edge/` mudou.
+
+```bash
+install -m 644 ops/vps/rd-gitops.service ops/vps/rd-gitops.timer /etc/systemd/system/
+systemctl daemon-reload && systemctl enable --now rd-gitops.timer
+journalctl -u rd-gitops.service -n 20        # histórico de verificações/redeploys
+```
+
+O redeploy do Portainer faz `down` + `up` da stack (≈1 min fora do ar a cada push; volumes preservados).
 
 Acesso administrativo (somente loopback da VPS, via túnel SSH):
 `ssh -L 8025:127.0.0.1:8025 -L 3005:127.0.0.1:3005 root@<vps>` → Mailpit `http://localhost:8025`,

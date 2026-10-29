@@ -1,0 +1,11 @@
+# RD Mídia Indoor — dispara rd-gitops.service a cada 2 minutos (AÇÃO 005).
+[Unit]
+Description=RD Midia Indoor - checagem GitOps a cada 2 minutos
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=2min
+AccuracySec=15s
+
+[Install]
+WantedBy=timers.target
