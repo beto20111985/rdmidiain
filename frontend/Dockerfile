@@ -40,9 +40,10 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Copy built assets
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Health check
+# Health check — 127.0.0.1 (não "localhost"): no Alpine localhost resolve para ::1 e o
+# nginx.conf só escuta IPv4 (listen 80) → o healthcheck falhava com o site no ar (AÇÃO 005).
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
+  CMD wget --quiet --tries=1 --spider http://127.0.0.1/ || exit 1
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
