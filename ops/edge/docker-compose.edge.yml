@@ -3,8 +3,12 @@
 # -----------------------------------------------------------------------------
 # UMA por VPS. Termina o TLS de todas as instâncias do host (dev, dev-teste, …),
 # emite/renova certificados Let's Encrypt (HTTP-01) e encaminha HTTP para o nginx
-# de cada instância pela rede ${RD_EDGE_NETWORK} (sub-rede fixa: é o único par
-# confiável para X-Forwarded-* no nginx das instâncias — RD_TRUSTED_PROXY_CIDR).
+# de cada instância pela rede ${RD_EDGE_NETWORK}. O Traefik tem IP FIXO nessa rede
+# (RD_EDGE_TRAEFIK_IP): é o único par confiável para X-Forwarded-* no nginx das
+# instâncias (RD_TRUSTED_PROXY_CIDR=<ip>/32).
+#
+# A API do Docker NÃO é montada no Traefik (exposto à internet): ele lê só a lista de
+# containers/eventos por um socket-proxy somente leitura numa rede interna própria.
 #
 # Cada instância se registra por labels no próprio nginx (docker-compose.dev-online.yml).
 # Nada de painel/dashboard do Traefik exposto. Portainer → Stack "rd-edge" (Git) ou:
@@ -21,14 +25,46 @@ networks:
     ipam:
       config:
         - subnet: ${RD_EDGE_SUBNET:-10.250.0.0/24}
+  docker-api:
+    driver: bridge
+    internal: true
 
 volumes:
   letsencrypt:
 
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "20m"
+    max-file: "5"
+
 services:
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy:${RD_SOCKET_PROXY_VERSION:-v0.4.2}
+    restart: unless-stopped
+    environment:
+      # Somente leitura do necessário ao provider Docker do Traefik.
+      CONTAINERS: "1"
+      EVENTS: "1"
+      PING: "1"
+      VERSION: "1"
+      POST: "0"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - docker-api
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 64M
+
   traefik:
     image: traefik:${RD_TRAEFIK_VERSION:-v3.7.16}
     restart: unless-stopped
+    depends_on:
+      - socket-proxy
     command:
       - --global.checknewversion=false
       - --global.sendanonymoususage=false
@@ -36,6 +72,7 @@ services:
       - --ping=true
       - --api.dashboard=false
       - --providers.docker=true
+      - --providers.docker.endpoint=tcp://socket-proxy:2375
       - --providers.docker.exposedbydefault=false
       - --providers.docker.network=${RD_EDGE_NETWORK:-rd-edge}
       - --entrypoints.web.address=:80
@@ -43,8 +80,9 @@ services:
       - --entrypoints.web.http.redirections.entrypoint.scheme=https
       - --entrypoints.websecure.address=:443
       - --entrypoints.websecure.http.tls=true
-      # Uploads de vídeo (até 600 s no nginx) e WebSocket de longa duração (3600 s).
-      - --entrypoints.websecure.transport.respondingtimeouts.readtimeout=3600s
+      # Uploads de vídeo de até 210 MB (600 s no nginx). WebSocket já estabelecido não
+      # é afetado por este limite de leitura da requisição.
+      - --entrypoints.websecure.transport.respondingtimeouts.readtimeout=900s
       - --entrypoints.websecure.transport.respondingtimeouts.idletimeout=180s
       - --certificatesresolvers.le.acme.httpchallenge=true
       - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
@@ -53,20 +91,17 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
       - letsencrypt:/letsencrypt
     networks:
-      - edge
+      edge:
+        ipv4_address: ${RD_EDGE_TRAEFIK_IP:-10.250.0.2}
+      docker-api: {}
     healthcheck:
       test: ["CMD", "traefik", "healthcheck", "--ping"]
       interval: 30s
       timeout: 5s
       retries: 3
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "20m"
-        max-file: "5"
+    logging: *default-logging
     deploy:
       resources:
         limits:

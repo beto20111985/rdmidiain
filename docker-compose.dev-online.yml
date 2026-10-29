@@ -52,6 +52,9 @@ x-backend-env: &backend-env
   SECRET_KEY_FILE: /run/secrets/app_secret_key
   JWT_SECRET_KEY_FILE: /run/secrets/jwt_secret_key
   DATA_ENCRYPTION_KEY_FILE: /run/secrets/data_encryption_key
+  # Provedor FALSO (MOCK_PAYMENT) também assina/valida webhooks: sem este segredo a
+  # simulação de pagamento responde 503 WEBHOOK_SECRET_NOT_CONFIGURED.
+  CLOUDPAYPAG_WEBHOOK_SECRET_FILE: /run/secrets/cloudpaypag_webhook_secret
   # E-mails (convites, códigos, alertas) ficam no Mailpit desta instância (§12).
   EMAIL_BACKEND: smtp
   SMTP_HOST: mailpit
@@ -75,6 +78,7 @@ x-backend-secrets: &backend-secrets
   - app_secret_key
   - jwt_secret_key
   - data_encryption_key
+  - cloudpaypag_webhook_secret
   - manifest_signing_key
 
 x-backend-configs: &backend-configs
@@ -137,6 +141,9 @@ secrets:
     file: ${RD_SECRETS_DIR}/grafana_admin_password
   manifest_signing_key:
     file: ${RD_SECRETS_DIR}/manifest_signing_key
+  # Gerado para a instância DEV (64 alfanuméricos) — não é credencial do CloudPayPag real.
+  cloudpaypag_webhook_secret:
+    file: ${RD_SECRETS_DIR}/cloudpaypag_webhook_secret
   bootstrap_master_password:
     file: ${RD_SECRETS_DIR}/bootstrap_master_password
 
@@ -160,7 +167,7 @@ services:
       RD_PANEL_DOMAIN: ${RD_PANEL_DOMAIN}
       RD_API_DOMAIN: ${RD_API_DOMAIN}
       RD_PLAYER_DOMAIN: ${RD_PLAYER_DOMAIN}
-      RD_TRUSTED_PROXY_CIDR: ${RD_TRUSTED_PROXY_CIDR:-10.250.0.0/24}
+      RD_TRUSTED_PROXY_CIDR: ${RD_TRUSTED_PROXY_CIDR:-10.250.0.2/32}
     depends_on:
       - backend
       - frontend

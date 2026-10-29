@@ -530,3 +530,61 @@ Produção nunca expõe PostgreSQL/Redis/Prometheus/Loki; a rede `internal` não
   empacotado. Nenhum contexto de build inclui a raiz, portanto `stack/` é inalcançável
   por `COPY`.
 - `.gitattributes`: scripts/configs com LF (CRLF quebra `sh` e nginx nos containers).
+
+## 12. DEV online na VPS de testes (Portainer + Git + borda compartilhada) — AÇÃO 005
+
+Topologia de uma VPS com várias instâncias (dev agora; dev-teste e outras depois):
+
+| Peça | Arquivo | Papel |
+|---|---|---|
+| Borda compartilhada (1 por VPS) | `ops/edge/docker-compose.edge.yml` (stack `rd-edge`) | Traefik: portas 80/443, TLS Let's Encrypt (HTTP-01), redirect HTTP→HTTPS; lê containers por socket-proxy somente leitura; IP fixo `10.250.0.2` na rede `rd-edge` |
+| Instância DEV | `docker-compose.dev-online.yml` (raiz; stack `rd-dev`) | imagens **construídas do código** a cada deploy (`pull_policy: build`); `ENVIRONMENT=development` (pagamento FALSO, OpenAPI em `api-dev`, e-mails no Mailpit); nginx da instância sem porta no host (`nginx/prod/templates-proxied/`) |
+| Variáveis da instância | `ops/portainer/dev-online.env.example` | domínios, diretórios de segredos/config, bootstrap |
+
+Domínios da instância: painel `RD_PANEL_DOMAIN` (SPA + `/api` + `/ws` na mesma origem — contrato
+do painel), API direta `RD_API_DOMAIN` (`/api`, `/ws`, `/health`, `/api/v1/docs`) e Player Web
+`RD_PLAYER_DOMAIN` (só rotas do player). O nginx da instância só aceita `X-Forwarded-*` do IP fixo
+do Traefik (`RD_TRUSTED_PROXY_CIDR=10.250.0.2/32`): rate limit e auditoria usam o IP real do cliente.
+Sem registro AAAA nos domínios (rede da borda é só IPv4; IPv6 chegaria com o IP do gateway).
+
+Preparação do host (uma vez, root):
+
+```bash
+# Docker CE + compose plugin; firewall: 22, 80, 443, 9443
+install -d -m 700 /opt/rd-midiaindoor/instancias
+docker run -d --name portainer --restart=always -p 9443:9443 \
+  -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data \
+  -v /opt/rd-midiaindoor/instancias:/opt/rd-midiaindoor/instancias:ro \
+  portainer/portainer-ce:2.45.2 --admin-password-file <arquivo com a senha>
+```
+
+A montagem de `/opt/rd-midiaindoor/instancias` **no mesmo caminho** dentro do Portainer é
+obrigatória: o compose roda dentro do container do Portainer e precisa enxergar os arquivos de
+`secrets:`/`configs:` (somente leitura).
+
+Por instância (ex.: `rd-dev`):
+
+```bash
+I=/opt/rd-midiaindoor/instancias/rd-dev
+install -d -m 700 $I/secrets $I/config
+RD_SECRETS_DIR=$I/secrets bash ops/dev/generate-secrets.sh       # + manifest_signing_key
+# segredo do provedor FALSO (assina/valida webhooks simulados) — 64 alfanuméricos
+( umask 077; openssl rand -base64 96 | tr -dc 'A-Za-z0-9' | cut -c1-64 > $I/secrets/cloudpaypag_webhook_secret )
+echo '{}' > $I/config/player_release_public_keys.json
+# alertmanager.yml: smarthost mailpit:1025 sem TLS (alertas no Mailpit da instância)
+```
+
+Portainer → Stacks → Add stack → **Repository**: URL do repositório, referência `refs/heads/dev`,
+compose `docker-compose.dev-online.yml`, variáveis de `ops/portainer/dev-online.env.example`
+preenchidas, **GitOps updates** (polling) ligado → cada push no branch `dev` reconstrói e
+reimplanta a instância. A borda: stack `rd-edge` (mesmo repositório, `ops/edge/docker-compose.edge.yml`),
+implantada **antes** das instâncias (cria a rede `rd-edge`).
+
+Acesso administrativo (somente loopback da VPS, via túnel SSH):
+`ssh -L 8025:127.0.0.1:8025 -L 3005:127.0.0.1:3005 root@<vps>` → Mailpit `http://localhost:8025`,
+Grafana `http://localhost:3005`. Portainer: `https://<vps>:9443`.
+
+Fluxo de versões planejado (não implementado nesta ação): `dev` validado online → tag de versão
+(ex.: `vX.Y.Z-beta.N`) → `ops/release/build-images.sh` publica imagens versionadas num registro →
+instância **dev-teste** usa `ops/portainer/docker-compose.prod.yml`-like com `RD_VERSION` (imagem,
+não código) atrás da mesma borda.

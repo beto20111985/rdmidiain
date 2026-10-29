@@ -13,7 +13,8 @@
 #   RD_PANEL_DOMAIN         painel (+ /api e /ws do painel, mesma origem — contrato do SPA)
 #   RD_API_DOMAIN           API direta (/api, /ws, /health e, se o backend habilitar, /docs)
 #   RD_PLAYER_DOMAIN        Player Web (origem separada)
-#   RD_TRUSTED_PROXY_CIDR   sub-rede da rede da borda (único par confiável p/ X-Forwarded-*)
+#   RD_TRUSTED_PROXY_CIDR   IP FIXO do Traefik na rede da borda (/32 — único par confiável
+#                           p/ X-Forwarded-*; nginx de outras instâncias na mesma rede não)
 #
 # Regras iguais às de produção (mesmos snippets): headers/CSP/HSTS, rate limit,
 # rotas do player só na origem do player, /health/* e /metrics negados.
@@ -37,9 +38,15 @@ geo $realip_remote_addr $rd_trusted_proxy {
 }
 
 # Variáveis usadas por snippets/proxy-common.conf: esquema/porta públicos = os da borda.
-map "$rd_trusted_proxy:$http_x_forwarded_proto" $rd_forwarded_proto {
-    default                                     $scheme;
-    "~^1:(?:[^,]*,)*\s*(?<rd_xfp>https?)\s*$"   $rd_xfp;
+# O Traefik envia "wss"/"ws" em upgrades WebSocket — normalizados para https/http.
+map "$rd_trusted_proxy:$http_x_forwarded_proto" $rd_xfp_edge {
+    default                                          $scheme;
+    "~^1:(?:[^,]*,)*\s*(?<rd_xfp>https?|wss?)\s*$"   $rd_xfp;
+}
+map $rd_xfp_edge $rd_forwarded_proto {
+    default $rd_xfp_edge;
+    wss     https;
+    ws      http;
 }
 map $rd_forwarded_proto $rd_forwarded_port {
     default $server_port;
