@@ -80,6 +80,10 @@ services:
       - --entrypoints.web.http.redirections.entrypoint.scheme=https
       - --entrypoints.websecure.address=:443
       - --entrypoints.websecure.http.tls=true
+      # Cabeçalhos que "apelidam" outros (X_Forwarded_For, X.Forwarded.For) são descartados:
+      # impede forjar os X-Forwarded-* gerados pela borda em backends que normalizam nomes.
+      - --entrypoints.web.http.aliasheadersstrategy=delete
+      - --entrypoints.websecure.http.aliasheadersstrategy=delete
       # Uploads de vídeo de até 210 MB (600 s no nginx). WebSocket já estabelecido não
       # é afetado por este limite de leitura da requisição.
       - --entrypoints.websecure.transport.respondingtimeouts.readtimeout=900s
