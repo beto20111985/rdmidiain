@@ -563,7 +563,11 @@ do Traefik: **9 210 requisições roteadas, 0 erros 5xx/conexão**. Reboot da VP
 
 **Regras obrigatórias para manter "sem queda":**
 - migrations **compatíveis com a versão anterior** (expandir → implantar → contrair): as duas
-  versões convivem alguns segundos;
+  versões convivem alguns segundos. **Garantido pelo CI**: o job `migrations` roda
+  `backend/scripts/check_migrations.py` nas migrations novas/alteradas e **bloqueia o deploy** se houver
+  drop/rename/troca de tipo/NOT NULL sem default/SQL destrutivo ou dinâmico — exceto migration marcada
+  `RD_MIGRATION_PHASE = "contract"` (fase contrair: nada no ar usa o que sai). O backend antigo também
+  sobe com o banco à frente (`wait_for_schema.py`), então um rollback não trava;
 - **nunca polling** para deploy (decisão do proprietário): gatilho só por evento (webhook do CI);
 - mudanças na stack de **dados** (`docker-compose.dev-data.yml`, `ops/`, `observability/`) NÃO
   passam pelo CI: reimplantar de propósito, em janela (o Portainer recria o banco);
@@ -571,15 +575,20 @@ do Traefik: **9 210 requisições roteadas, 0 erros 5xx/conexão**. Reboot da VP
   2.45.2 quebra caminhos absolutos de `secrets: file:` em stack Swarm ("/data/compose/<id>//opt/…")
   e o deploy falha em silêncio (o webhook responde 204 sem implantar). Segredos do Swarm são
   imutáveis: para trocar um valor, crie `<inst>_<nome>_v2`, aponte a stack para ele e remova o antigo;
-- **labels do Traefik no nginx** (domínios, routers, middlewares) não mudam num deploy comum: durante
-  o start-first os dois containers convivem e, com labels diferentes, o Traefik descarta o router
-  ("defined multiple times with different configurations") ⇒ mudança de label = janela;
+- **rotas da borda sem janela**: routers e middlewares de cada instância ficam em
+  `/opt/rd-midiaindoor/edge/dynamic/<inst>.yml`, gerado por `ops/swarm/rd-instance-init.sh` a partir dos
+  domínios e recarregado pelo Traefik por evento de arquivo (provider file). Mudar domínio/rota/middleware
+  = ajustar o `stack.env` e rodar o init de novo. No nginx ficam só os labels do **serviço** (porta + health
+  check); para mudá-los sem janela, use um novo `RD_EDGE_SERVICE_REV` (ex.: `-v2`) na stack, implante (as
+  duas versões do serviço convivem) e então rode o init com o mesmo sufixo para apontar as rotas;
 - o webhook da stack é criado com **"Re-pull image" e "Force redeployment"** ligados (sem o force, o
   Portainer ignora o webhook quando o commit já foi implantado e a imagem nova nunca entraria);
 - o CI publica `:sha-<commit>` e só move `:dev` depois de **todas** as imagens construídas; imagem
   sem mudança mantém o mesmo digest e o Swarm não toca no serviço;
-- o webhook responde antes do fim do rollout: falha de rollout (rollback automático) aparece no
-  Portainer (serviço → *Update status*) e nos logs — conferir após mudanças grandes.
+- **falha de deploy alerta sozinha**: o serviço `deploy-watcher` (stack da aplicação, imagem
+  `ops/deploy-watcher`) segue os EVENTOS do Docker e publica no Alertmanager da instância
+  `RdDeployRollback` (troca falhou e voltou à versão anterior), `RdDeployPausado` e `RdMigracaoFalhou`
+  (e-mail; no DEV, Mailpit), resolvidos automaticamente no próximo deploy/migração bem-sucedido.
 
 Ajustes da borda medidos (AÇÃO 007, serviço de teste com 3 trocas e requisição a cada 50 ms): Traefik
 padrão = 1 falha por troca (o throttle de 2 s mantém o IP do container que saiu e a conexão espera

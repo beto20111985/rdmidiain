@@ -2,7 +2,8 @@
 # RD Mídia Indoor — imagens da APLICAÇÃO do ambiente DEV + deploy por EVENTO (AÇÃO 007)
 # -----------------------------------------------------------------------------
 # push no branch dev:
-#   1. detecta quais imagens mudaram (backend, frontend, player-web, nginx) desde o push anterior;
+#   1. detecta quais imagens mudaram (backend, frontend, player-web, nginx, deploy-watcher) desde o
+#      push anterior (pelo diretório de contexto de cada uma);
 #   2. constrói SÓ essas e publica no GHCR com :sha-<commit>;
 #   3. depois que TODAS terminaram, promove cada uma para :dev (sem estado misto em falha);
 #   4. chama o webhook da stack Swarm "rd-dev-app" no Portainer (segredo abaixo).
@@ -41,6 +42,7 @@ jobs:
       matrix: ${{ steps.detect.outputs.matrix }}
       any: ${{ steps.detect.outputs.any }}
       deploy: ${{ steps.detect.outputs.deploy }}
+      migrations: ${{ steps.detect.outputs.migrations }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -50,13 +52,16 @@ jobs:
           BEFORE: ${{ github.event.before }}
           EVENT: ${{ github.event_name }}
         run: |
-          all='[{"image":"backend","target":"production"},{"image":"frontend","target":"production"},{"image":"player-web","target":"production"},{"image":"nginx","target":""}]'
+          all='[{"image":"backend","context":"backend","target":"production"},{"image":"frontend","context":"frontend","target":"production"},{"image":"player-web","context":"player-web","target":"production"},{"image":"nginx","context":"nginx","target":""},{"image":"deploy-watcher","context":"ops/deploy-watcher","target":""}]'
           if [ "$EVENT" != "push" ] || [ -z "$BEFORE" ] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
             echo "matrix=$all" >> "$GITHUB_OUTPUT"; echo "any=true" >> "$GITHUB_OUTPUT"; echo "deploy=true" >> "$GITHUB_OUTPUT"
             echo "sem push anterior conhecido: todas as imagens"; exit 0
           fi
           changed="$(git diff --name-only "$BEFORE" "$GITHUB_SHA")"
-          sel=$(echo "$all" | jq -c --arg c "$changed" '[.[] | select(.image as $i | ($c | split("\n") | any(startswith($i + "/"))))]')
+          # migrations novas/alteradas neste push (verificadas pelo job "migrations")
+          mig="$(git diff --name-only --diff-filter=AM "$BEFORE" "$GITHUB_SHA" -- 'backend/migrations/versions/*.py' | tr '\n' ' ')"
+          echo "migrations=$mig" >> "$GITHUB_OUTPUT"
+          sel=$(echo "$all" | jq -c --arg c "$changed" '[.[] | select(.context as $i | ($c | split("\n") | any(startswith($i + "/"))))]')
           echo "matrix=$sel" >> "$GITHUB_OUTPUT"
           any=$( [ "$sel" = "[]" ] && echo false || echo true )
           echo "any=$any" >> "$GITHUB_OUTPUT"
@@ -87,7 +92,7 @@ jobs:
       - name: Build e push ${{ matrix.image }} (:sha-<commit>)
         uses: docker/build-push-action@v6
         with:
-          context: ./${{ matrix.image }}
+          context: ./${{ matrix.context }}
           target: ${{ matrix.target }}
           push: true
           provenance: false
@@ -99,10 +104,24 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.image }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image }}
 
-  # Só depois de TODAS as imagens construídas: :dev aponta para as novas e o deploy é disparado.
+  # Deploy sem queda exige migration COMPATÍVEL com a versão anterior (as duas convivem durante
+  # a troca): operações destrutivas só com RD_MIGRATION_PHASE = "contract" — senão o deploy para aqui.
+  migrations:
+    needs: changes
+    if: needs.changes.outputs.migrations != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verificar compatibilidade das migrations (expandir → contrair)
+        env:
+          FILES: ${{ needs.changes.outputs.migrations }}
+        run: python3 backend/scripts/check_migrations.py $FILES
+
+  # Só depois de TODAS as imagens construídas e das migrations verificadas: :dev aponta para as
+  # novas e o deploy é disparado.
   deploy:
-    needs: [changes, build]
-    if: always() && needs.changes.outputs.deploy == 'true' && (needs.build.result == 'success' || needs.build.result == 'skipped')
+    needs: [changes, build, migrations]
+    if: always() && needs.changes.outputs.deploy == 'true' && (needs.build.result == 'success' || needs.build.result == 'skipped') && (needs.migrations.result == 'success' || needs.migrations.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: docker/setup-buildx-action@v3

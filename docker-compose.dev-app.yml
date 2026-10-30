@@ -173,30 +173,17 @@ services:
     networks:
       - rd-edge
       - internal
+    # Só o SERVIÇO da borda (porta + health check ativo). Routers e middlewares ficam no arquivo
+    # de rotas gerado por ops/swarm/rd-instance-init.sh (provider file — sem janela para mudar).
+    # Mudar estes labels sem janela: novo sufixo RD_EDGE_SERVICE_REV aqui E no init (as duas
+    # versões do serviço convivem durante a troca) — ops/README.md §12.
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=${RD_EDGE_NETWORK:-rd-edge}"
-      - "traefik.http.services.${RD_INSTANCE}.loadbalancer.server.port=80"
-      - "traefik.http.services.${RD_INSTANCE}.loadbalancer.healthcheck.path=/__rd_ready"
-      - "traefik.http.services.${RD_INSTANCE}.loadbalancer.healthcheck.interval=1s"
-      - "traefik.http.services.${RD_INSTANCE}.loadbalancer.healthcheck.timeout=500ms"
-      - "traefik.http.middlewares.${RD_INSTANCE}-retry.retry.attempts=3"
-      - "traefik.http.middlewares.${RD_INSTANCE}-retry.retry.initialinterval=100ms"
-      - "traefik.http.routers.${RD_INSTANCE}-panel.rule=Host(`${RD_PANEL_DOMAIN}`)"
-      - "traefik.http.routers.${RD_INSTANCE}-panel.entrypoints=websecure"
-      - "traefik.http.routers.${RD_INSTANCE}-panel.tls.certresolver=le"
-      - "traefik.http.routers.${RD_INSTANCE}-panel.service=${RD_INSTANCE}"
-      - "traefik.http.routers.${RD_INSTANCE}-panel.middlewares=${RD_INSTANCE}-retry"
-      - "traefik.http.routers.${RD_INSTANCE}-api.rule=Host(`${RD_API_DOMAIN}`)"
-      - "traefik.http.routers.${RD_INSTANCE}-api.entrypoints=websecure"
-      - "traefik.http.routers.${RD_INSTANCE}-api.tls.certresolver=le"
-      - "traefik.http.routers.${RD_INSTANCE}-api.service=${RD_INSTANCE}"
-      - "traefik.http.routers.${RD_INSTANCE}-api.middlewares=${RD_INSTANCE}-retry"
-      - "traefik.http.routers.${RD_INSTANCE}-player.rule=Host(`${RD_PLAYER_DOMAIN}`)"
-      - "traefik.http.routers.${RD_INSTANCE}-player.entrypoints=websecure"
-      - "traefik.http.routers.${RD_INSTANCE}-player.tls.certresolver=le"
-      - "traefik.http.routers.${RD_INSTANCE}-player.service=${RD_INSTANCE}"
-      - "traefik.http.routers.${RD_INSTANCE}-player.middlewares=${RD_INSTANCE}-retry"
+      - "traefik.http.services.${RD_INSTANCE}${RD_EDGE_SERVICE_REV:-}.loadbalancer.server.port=80"
+      - "traefik.http.services.${RD_INSTANCE}${RD_EDGE_SERVICE_REV:-}.loadbalancer.healthcheck.path=/__rd_ready"
+      - "traefik.http.services.${RD_INSTANCE}${RD_EDGE_SERVICE_REV:-}.loadbalancer.healthcheck.interval=1s"
+      - "traefik.http.services.${RD_INSTANCE}${RD_EDGE_SERVICE_REV:-}.loadbalancer.healthcheck.timeout=500ms"
     healthcheck:
       test: ["CMD-SHELL", "nginx -t -q && wget -q -O /dev/null http://127.0.0.1:8081/nginx-health || exit 1"]
       interval: 10s
@@ -409,3 +396,33 @@ services:
         limits:
           cpus: "0.5"
           memory: 512M
+
+  # ─── Observador de deploy: eventos do Docker → alertas (sem polling) ─────────
+  # RdDeployRollback / RdDeployPausado / RdMigracaoFalhou no Alertmanager da instância
+  # (e-mail; no DEV, Mailpit). Lê o Docker pelo socket SOMENTE LEITURA (nó manager único).
+  deploy-watcher:
+    image: ${RD_IMAGE_PREFIX:-ghcr.io/beto20111985/rdmidiain}/deploy-watcher:${RD_IMAGE_TAG:-dev}
+    environment:
+      RD_SWARM_STACK: ${RD_INSTANCE}-app
+      RD_INSTANCE: ${RD_INSTANCE}
+      RD_ALERTMANAGER_URL: http://alertmanager:9093
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - internal
+    logging: *default-logging
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+      update_config:
+        parallelism: 1
+        order: stop-first
+        failure_action: rollback
+      restart_policy:
+        condition: any
+        delay: 5s
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 64M
