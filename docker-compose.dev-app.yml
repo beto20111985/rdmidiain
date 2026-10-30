@@ -106,6 +106,10 @@ networks:
   # Saída controlada para a internet (backend/worker).
   egress:
     driver: overlay
+  # Observador ↔ socket-proxy somente leitura (ninguém mais entra).
+  docker-api:
+    driver: overlay
+    internal: true
 
 volumes:
   # Mesmo volume da instância (mídia enviada + chaves locais) — preservado entre deploys.
@@ -399,17 +403,58 @@ services:
 
   # ─── Observador de deploy: eventos do Docker → alertas (sem polling) ─────────
   # RdDeployRollback / RdDeployPausado / RdMigracaoFalhou no Alertmanager da instância
-  # (e-mail; no DEV, Mailpit). Lê o Docker pelo socket SOMENTE LEITURA (nó manager único).
+  # (e-mail; no DEV, Mailpit). Sem acesso direto ao socket do Docker: lê só eventos/serviços/
+  # tarefas pelo socket-proxy SOMENTE LEITURA (POST=0) numa rede overlay interna exclusiva.
   deploy-watcher:
     image: ${RD_IMAGE_PREFIX:-ghcr.io/beto20111985/rdmidiain}/deploy-watcher:${RD_IMAGE_TAG:-dev}
     environment:
       RD_SWARM_STACK: ${RD_INSTANCE}-app
       RD_INSTANCE: ${RD_INSTANCE}
       RD_ALERTMANAGER_URL: http://alertmanager:9093
+      DOCKER_HOST: tcp://docker-api:2375
+    networks:
+      - internal
+      - docker-api
+    healthcheck:
+      # o fluxo de eventos precisa estar vivo; se não, o Swarm reinicia o observador
+      test: ["CMD-SHELL", "pgrep -f 'docker events' >/dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+      start_interval: 2s
+    logging: *default-logging
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        order: stop-first
+        failure_action: rollback
+      restart_policy:
+        condition: any
+        delay: 5s
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 64M
+
+  docker-api:
+    image: tecnativa/docker-socket-proxy:${RD_SOCKET_PROXY_VERSION:-v0.4.2}
+    environment:
+      # somente leitura do necessário ao observador
+      EVENTS: "1"
+      SERVICES: "1"
+      TASKS: "1"
+      CONTAINERS: "1"
+      NODES: "1"
+      INFO: "1"
+      VERSION: "1"
+      PING: "1"
+      POST: "0"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
-      - internal
+      - docker-api
     logging: *default-logging
     deploy:
       replicas: 1
@@ -417,7 +462,7 @@ services:
         constraints: [node.role == manager]
       update_config:
         parallelism: 1
-        order: stop-first
+        order: start-first
         failure_action: rollback
       restart_policy:
         condition: any

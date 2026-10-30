@@ -42,7 +42,6 @@ jobs:
       matrix: ${{ steps.detect.outputs.matrix }}
       any: ${{ steps.detect.outputs.any }}
       deploy: ${{ steps.detect.outputs.deploy }}
-      migrations: ${{ steps.detect.outputs.migrations }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -58,9 +57,6 @@ jobs:
             echo "sem push anterior conhecido: todas as imagens"; exit 0
           fi
           changed="$(git diff --name-only "$BEFORE" "$GITHUB_SHA")"
-          # migrations novas/alteradas neste push (verificadas pelo job "migrations")
-          mig="$(git diff --name-only --diff-filter=AM "$BEFORE" "$GITHUB_SHA" -- 'backend/migrations/versions/*.py' | tr '\n' ' ')"
-          echo "migrations=$mig" >> "$GITHUB_OUTPUT"
           sel=$(echo "$all" | jq -c --arg c "$changed" '[.[] | select(.context as $i | ($c | split("\n") | any(startswith($i + "/"))))]')
           echo "matrix=$sel" >> "$GITHUB_OUTPUT"
           any=$( [ "$sel" = "[]" ] && echo false || echo true )
@@ -105,23 +101,22 @@ jobs:
           cache-to: type=gha,mode=max,scope=${{ matrix.image }}
 
   # Deploy sem queda exige migration COMPATÍVEL com a versão anterior (as duas convivem durante
-  # a troca): operações destrutivas só com RD_MIGRATION_PHASE = "contract" — senão o deploy para aqui.
+  # a troca): operações destrutivas só com RD_MIGRATION_PHASE = "contract" — senão o deploy para
+  # aqui. Verifica SEMPRE todas as migrations (não depende do diff: workflow_dispatch, force-push
+  # ou push seguinte não escondem uma migration); as anteriores à AÇÃO 007 valem pelo sha256.
   migrations:
-    needs: changes
-    if: needs.changes.outputs.migrations != ''
+    if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Verificar compatibilidade das migrations (expandir → contrair)
-        env:
-          FILES: ${{ needs.changes.outputs.migrations }}
-        run: python3 backend/scripts/check_migrations.py $FILES
+      - name: Verificar compatibilidade de TODAS as migrations (expandir → contrair)
+        run: python3 backend/scripts/check_migrations.py --all
 
   # Só depois de TODAS as imagens construídas e das migrations verificadas: :dev aponta para as
   # novas e o deploy é disparado.
   deploy:
     needs: [changes, build, migrations]
-    if: always() && needs.changes.outputs.deploy == 'true' && (needs.build.result == 'success' || needs.build.result == 'skipped') && (needs.migrations.result == 'success' || needs.migrations.result == 'skipped')
+    if: always() && needs.changes.outputs.deploy == 'true' && (needs.build.result == 'success' || needs.build.result == 'skipped') && needs.migrations.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: docker/setup-buildx-action@v3

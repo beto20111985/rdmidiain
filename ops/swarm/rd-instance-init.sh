@@ -33,8 +33,16 @@ API="${RD_API_DOMAIN:?defina RD_API_DOMAIN}"
 PLAYER="${RD_PLAYER_DOMAIN:?defina RD_PLAYER_DOMAIN}"
 DYN_DIR="${RD_EDGE_DYNAMIC_DIR:-/opt/rd-midiaindoor/edge/dynamic}"
 # Serviço do Traefik definido pelos labels do nginx (docker-compose.dev-app.yml). Para mudar
-# porta/health check sem janela: novo sufixo aqui E na stack (as duas versões convivem).
-SVC="${INST}${RD_EDGE_SERVICE_REV:-}@docker"
+# porta/health check sem janela: procedimento de 3 passos com RD_EDGE_SERVICE_REV (ops/README.md §12).
+REV="${RD_EDGE_SERVICE_REV:-}"
+SVC="${INST}${REV}@docker"
+# Validação ANTES de gravar: um arquivo de rotas inválido faria o provider de arquivo do Traefik
+# rejeitar o diretório inteiro (todas as instâncias) no próximo restart da borda.
+for d in "$PANEL" "$API" "$PLAYER"; do
+  [[ "$d" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$ ]] || { echo "domínio inválido: '$d'" >&2; exit 4; }
+done
+[[ "$INST" =~ ^[a-z0-9][a-z0-9-]*$ ]] || { echo "RD_INSTANCE inválido: '$INST'" >&2; exit 4; }
+[[ -z "$REV" || "$REV" =~ ^-[a-z0-9]+$ ]] || { echo "RD_EDGE_SERVICE_REV inválido: '$REV' (ex.: -v2)" >&2; exit 4; }
 SECRETS=(db_owner_password db_app_password redis_password app_secret_key jwt_secret_key
          data_encryption_key cloudpaypag_webhook_secret manifest_signing_key bootstrap_master_password)
 

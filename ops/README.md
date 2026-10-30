@@ -564,7 +564,8 @@ do Traefik: **9 210 requisições roteadas, 0 erros 5xx/conexão**. Reboot da VP
 **Regras obrigatórias para manter "sem queda":**
 - migrations **compatíveis com a versão anterior** (expandir → implantar → contrair): as duas
   versões convivem alguns segundos. **Garantido pelo CI**: o job `migrations` roda
-  `backend/scripts/check_migrations.py` nas migrations novas/alteradas e **bloqueia o deploy** se houver
+  `backend/scripts/check_migrations.py --all` em TODO push/execução (não depende do diff; as migrations
+  anteriores à AÇÃO 007 valem pelo sha256 do conteúdo) e o deploy só roda se ele passar; ele **bloqueia** se houver
   drop/rename/troca de tipo/NOT NULL sem default/SQL destrutivo ou dinâmico — exceto migration marcada
   `RD_MIGRATION_PHASE = "contract"` (fase contrair: nada no ar usa o que sai). O backend antigo também
   sobe com o banco à frente (`wait_for_schema.py`), então um rollback não trava;
@@ -578,9 +579,14 @@ do Traefik: **9 210 requisições roteadas, 0 erros 5xx/conexão**. Reboot da VP
 - **rotas da borda sem janela**: routers e middlewares de cada instância ficam em
   `/opt/rd-midiaindoor/edge/dynamic/<inst>.yml`, gerado por `ops/swarm/rd-instance-init.sh` a partir dos
   domínios e recarregado pelo Traefik por evento de arquivo (provider file). Mudar domínio/rota/middleware
-  = ajustar o `stack.env` e rodar o init de novo. No nginx ficam só os labels do **serviço** (porta + health
-  check); para mudá-los sem janela, use um novo `RD_EDGE_SERVICE_REV` (ex.: `-v2`) na stack, implante (as
-  duas versões do serviço convivem) e então rode o init com o mesmo sufixo para apontar as rotas;
+  = ajustar o `stack.env` e rodar o init de novo (domínios validados antes de gravar). No nginx ficam só
+  os labels do **serviço** (porta + health check). Para mudá-los sem queda (raro), 3 passos:
+  1. na stack, o nginx passa a carregar os DOIS blocos de labels: o atual (`${RD_INSTANCE}`, valores atuais,
+     intocado) e um novo (`${RD_INSTANCE}-v2`, valores novos) → push/deploy (o container antigo e o novo
+     definem o serviço atual igual — sem conflito; o `-v2` só existe no novo);
+  2. `RD_EDGE_SERVICE_REV=-v2` no `stack.env` e rodar o init → as rotas passam para `-v2` por evento de arquivo;
+  3. remover da stack o bloco antigo e trocar o nome do bloco novo por `${RD_INSTANCE}${RD_EDGE_SERVICE_REV}`
+     → push/deploy (o Portainer recebe o mesmo `RD_EDGE_SERVICE_REV` no ambiente da stack);
 - o webhook da stack é criado com **"Re-pull image" e "Force redeployment"** ligados (sem o force, o
   Portainer ignora o webhook quando o commit já foi implantado e a imagem nova nunca entraria);
 - o CI publica `:sha-<commit>` e só move `:dev` depois de **todas** as imagens construídas; imagem
@@ -589,6 +595,10 @@ do Traefik: **9 210 requisições roteadas, 0 erros 5xx/conexão**. Reboot da VP
   `ops/deploy-watcher`) segue os EVENTOS do Docker e publica no Alertmanager da instância
   `RdDeployRollback` (troca falhou e voltou à versão anterior), `RdDeployPausado` e `RdMigracaoFalhou`
   (e-mail; no DEV, Mailpit), resolvidos automaticamente no próximo deploy/migração bem-sucedido.
+  Lê o Docker só por um socket-proxy somente leitura (serviço `docker-api`, POST=0, rede exclusiva);
+  retoma o fluxo do último evento visto (`--since`) e concilia o estado na partida (dispara ou resolve);
+  falha transitória do `migrate` (nova tentativa do Swarm) não alerta; healthcheck reinicia o observador
+  se o fluxo de eventos morrer.
 
 Ajustes da borda medidos (AÇÃO 007, serviço de teste com 3 trocas e requisição a cada 50 ms): Traefik
 padrão = 1 falha por troca (o throttle de 2 s mantém o IP do container que saiu e a conexão espera
@@ -615,7 +625,8 @@ echo '{}' > $I/config/player_release_public_keys.json
 No host, uma vez por instância (cria a overlay `<inst>-internal`, os segredos e o config Swarm):
 
 ```bash
-RD_INSTANCE=rd-dev RD_SECRETS_DIR=$I/secrets RD_CONFIG_DIR=$I/config bash ops/swarm/rd-instance-init.sh
+# o MESMO stack.env das variáveis da stack (domínios, RD_EDGE_SERVICE_REV…)
+( set -a; . $I/stack.env; set +a; RD_SECRETS_DIR=$I/secrets RD_CONFIG_DIR=$I/config bash ops/swarm/rd-instance-init.sh )
 ```
 
 Ordem no Portainer (todas "Repository", referência `refs/heads/dev`, variáveis do `.env.example`):
