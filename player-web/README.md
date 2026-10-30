@@ -73,3 +73,11 @@ base-uri 'self'; frame-ancestors 'none'; require-trusted-types-for 'script'; tru
 - **Uma instância por origem:** abas na mesma origem compartilham a identidade do dispositivo; a segunda aba espera
   (Web Locks, `src/adapters/web/singleInstance.ts`) e assume quando a primeira fechar.
 - **Dev em container (bind mount do Windows):** o Vite usa polling (`/.dockerenv`; desligar com `VITE_USE_POLLING=0`).
+
+## Ambiente DEV online (VPS de testes)
+
+- Player: `https://player.rd-midiaindor.online/` — abre direto na tela "Parear esta tela" com o código e o QR.
+- Parear: painel `https://dev.rd-midiaindor.online` → Telas → Parear → informar o código (válido por 15 min).
+- Para reproduzir vídeo, a aba precisa ficar **visível** (o navegador adia a pré-carga de mídia em abas ocultas).
+- Deploy: push no branch `dev` → CI publica a imagem no GHCR → webhook do Portainer → troca sem queda no Swarm
+  (`ops/README.md` §12). O player continua tocando o que já tem em cache durante a troca e reconecta sozinho.
