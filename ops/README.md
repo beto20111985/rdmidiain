@@ -581,9 +581,11 @@ do Traefik: **9 210 requisições roteadas, 0 erros 5xx/conexão**. Reboot da VP
   domínios e recarregado pelo Traefik por evento de arquivo (provider file). Mudar domínio/rota/middleware
   = ajustar o `stack.env` e rodar o init de novo (domínios validados antes de gravar). No nginx ficam só
   os labels do **serviço** (porta + health check). Para mudá-los sem queda (raro), 3 passos:
-  1. na stack, o nginx passa a carregar os DOIS blocos de labels: o atual (`${RD_INSTANCE}`, valores atuais,
-     intocado) e um novo (`${RD_INSTANCE}-v2`, valores novos) → push/deploy (o container antigo e o novo
-     definem o serviço atual igual — sem conflito; o `-v2` só existe no novo);
+  1. na stack, o nginx passa a carregar os DOIS blocos de labels: o atual com o nome **literal** (ex.:
+     `traefik.http.services.rd-dev.…`, valores atuais — NÃO a variável: um deploy com o `RD_EDGE_SERVICE_REV`
+     novo já no ambiente renomearia esse bloco e ele colidiria com o novo) e um bloco novo com o nome
+     literal `rd-dev-v2` e os valores novos → push/deploy (o container antigo e o novo definem o serviço
+     atual igual — sem conflito; o `-v2` só existe no novo);
   2. `RD_EDGE_SERVICE_REV=-v2` no `stack.env` e rodar o init → as rotas passam para `-v2` por evento de arquivo;
   3. remover da stack o bloco antigo e trocar o nome do bloco novo por `${RD_INSTANCE}${RD_EDGE_SERVICE_REV}`
      → push/deploy (o Portainer recebe o mesmo `RD_EDGE_SERVICE_REV` no ambiente da stack);

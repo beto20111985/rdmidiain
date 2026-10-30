@@ -445,7 +445,8 @@ services:
       EVENTS: "1"
       SERVICES: "1"
       TASKS: "1"
-      CONTAINERS: "1"
+      # sem CONTAINERS: GET /containers/{id}/archive|export leria /run/secrets de qualquer
+      # container — o observador só usa eventos, serviços, tarefas e nós
       NODES: "1"
       INFO: "1"
       VERSION: "1"

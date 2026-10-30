@@ -108,10 +108,14 @@ def _literal_sql(node) -> str | None:
 
 def _sql_findings(sql: str) -> list[str]:
     reasons = []
+    # comentários de bloco e de linha não podem esconder um comando
+    sql = re.sub(r"/\*.*?\*/", " ", sql, flags=re.S)
+    sql = "\n".join(l.split("--", 1)[0] for l in sql.splitlines())
+    # bloco DO / EXECUTE (SQL dinâmico em PL/pgSQL): não dá para analisar com segurança
+    if re.search(r"^\s*DO\b", sql, re.I | re.M) or re.search(r"\bEXECUTE\b", sql, re.I):
+        reasons.append("SQL com bloco DO/EXECUTE (dinâmico): não verificável")
     for stmt in (s for s in sql.split(";") if s.strip()):
-        # remove comentários de linha antes de analisar
-        clean = "\n".join(l.split("--", 1)[0] for l in stmt.splitlines())
-        reasons += [why for rx, why in _STATEMENT_RULES if rx.search(clean)]
+        reasons += [why for rx, why in _STATEMENT_RULES if rx.search(stmt)]
     return reasons
 
 

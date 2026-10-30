@@ -82,6 +82,10 @@ def test_operacoes_que_quebram_a_versao_anterior_sao_detectadas(body, trecho):
     "DROP VIEW v",
     "DROP FUNCTION f()",
     "CREATE INDEX i ON u (x); DROP TABLE u",
+    # desvios da 2ª revisão: comentário de bloco e bloco DO / EXECUTE
+    "/* limpeza */ DROP TABLE u",
+    "DO $$ BEGIN ALTER TABLE u DROP COLUMN x; END $$",
+    "DO $$ BEGIN EXECUTE 'DROP TABLE ' || 'u'; END $$",
 ])
 def test_sql_destrutivo_e_detectado(statement):
     assert sql(statement), statement

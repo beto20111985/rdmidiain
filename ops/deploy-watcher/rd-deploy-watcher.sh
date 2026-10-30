@@ -72,22 +72,35 @@ on_die() {  # on_die <serviço completo> <exitCode>
   # RECENTE do job também falhou (tentativa nova em andamento ou concluída = sem alerta).
   (
     sleep "$FINAL_CHECK_S"
-    latest=$(for t in $(docker service ps -q "$1" 2>/dev/null); do
-               docker inspect --type task --format '{{.CreatedAt}} {{.Status.State}}' "$t" 2>/dev/null
-             done | sort -r | head -1 | awk '{print $NF}')
-    case "$latest" in
-      failed|rejected)
-        alert RdMigracaoFalhou migrate firing "Migração do banco falhou (código $2, sem nova tentativa)" \
-          "Stack $STACK: o job migrate falhou e não há nova tentativa. As tarefas novas não ficam saudáveis e a versão anterior segue atendendo; ver logs do serviço ${STACK}_migrate." ;;
-      *) log "migrate saiu com $2; tentativa mais recente: ${latest:-?} (sem alerta)" ;;
-    esac
+    migrate_verdict "$1" "código $2"
   ) &
 }
 
-reconcile() {  # estado atual de cada serviço: dispara ou resolve
+latest_task_state() {  # estado da tarefa mais recente de um serviço (job)
+  for t in $(docker service ps -q "$1" 2>/dev/null); do
+    docker inspect --type task --format '{{.CreatedAt}} {{.Status.State}}' "$t" 2>/dev/null
+  done | sort -r | head -1 | awk '{print $NF}'
+}
+
+migrate_verdict() {  # migrate_verdict <serviço completo> <detalhe>
+  latest=$(latest_task_state "$1")
+  case "$latest" in
+    failed|rejected)
+      alert RdMigracaoFalhou migrate firing "Migração do banco falhou ($2, sem nova tentativa)" \
+        "Stack $STACK: o job migrate falhou e não há nova tentativa. As tarefas novas não ficam saudáveis e a versão anterior segue atendendo; ver logs do serviço ${STACK}_migrate." ;;
+    complete)
+      alert RdMigracaoFalhou migrate resolved "Migração concluída" "Job migrate terminou com sucesso." ;;
+    *) log "migrate ($2): tentativa mais recente ${latest:-?} (sem alerta)" ;;
+  esac
+}
+
+reconcile() {  # estado atual de cada serviço: dispara ou resolve (inclui o job migrate)
   for s in $(docker service ls --filter "label=com.docker.stack.namespace=$STACK" --format '{{.Name}}' 2>/dev/null); do
-    case "$(short "$s")" in migrate|bootstrap) continue ;; esac
-    on_update "$s" "$(docker service inspect "$s" --format '{{if .UpdateStatus}}{{.UpdateStatus.State}}{{end}}' 2>/dev/null)"
+    case "$(short "$s")" in
+      migrate) migrate_verdict "$s" "estado na conciliação" ;;
+      bootstrap) ;;
+      *) on_update "$s" "$(docker service inspect "$s" --format '{{if .UpdateStatus}}{{.UpdateStatus.State}}{{end}}' 2>/dev/null)" ;;
+    esac
   done
 }
 
