@@ -76,6 +76,11 @@ services:
       - --global.checknewversion=false
       - --global.sendanonymoususage=false
       - --log.level=INFO
+      # Log de acesso JSON (sem cabeçalhos: nada de cookies/tokens); mostra o servidor escolhido
+      # e as tentativas do retry — diagnóstico de deploy sem queda (AÇÃO 007).
+      - --accesslog=true
+      - --accesslog.format=json
+      - --accesslog.fields.headers.defaultmode=drop
       - --ping=true
       - --api.dashboard=false
       - --providers.docker=true
