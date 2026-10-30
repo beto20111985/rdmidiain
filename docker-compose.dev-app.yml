@@ -112,29 +112,41 @@ volumes:
   media-storage:
     name: ${RD_INSTANCE}_media-storage
 
+# Segredos e config EXTERNOS, criados por ops/swarm/rd-instance-init.sh a partir de
+# RD_SECRETS_DIR/RD_CONFIG_DIR (o Portainer não lê arquivos em stack Swarm — §12).
 secrets:
   db_owner_password:
-    file: ${RD_SECRETS_DIR:?defina RD_SECRETS_DIR}/db_owner_password
+    external: true
+    name: ${RD_INSTANCE}_db_owner_password
   db_app_password:
-    file: ${RD_SECRETS_DIR}/db_app_password
+    external: true
+    name: ${RD_INSTANCE}_db_app_password
   redis_password:
-    file: ${RD_SECRETS_DIR}/redis_password
+    external: true
+    name: ${RD_INSTANCE}_redis_password
   app_secret_key:
-    file: ${RD_SECRETS_DIR}/app_secret_key
+    external: true
+    name: ${RD_INSTANCE}_app_secret_key
   jwt_secret_key:
-    file: ${RD_SECRETS_DIR}/jwt_secret_key
+    external: true
+    name: ${RD_INSTANCE}_jwt_secret_key
   data_encryption_key:
-    file: ${RD_SECRETS_DIR}/data_encryption_key
+    external: true
+    name: ${RD_INSTANCE}_data_encryption_key
   cloudpaypag_webhook_secret:
-    file: ${RD_SECRETS_DIR}/cloudpaypag_webhook_secret
+    external: true
+    name: ${RD_INSTANCE}_cloudpaypag_webhook_secret
   manifest_signing_key:
-    file: ${RD_SECRETS_DIR}/manifest_signing_key
+    external: true
+    name: ${RD_INSTANCE}_manifest_signing_key
   bootstrap_master_password:
-    file: ${RD_SECRETS_DIR}/bootstrap_master_password
+    external: true
+    name: ${RD_INSTANCE}_bootstrap_master_password
 
 configs:
   player_release_public_keys:
-    file: ${RD_CONFIG_DIR:?defina RD_CONFIG_DIR}/player_release_public_keys.json
+    external: true
+    name: ${RD_INSTANCE}_player_release_public_keys
 
 services:
 

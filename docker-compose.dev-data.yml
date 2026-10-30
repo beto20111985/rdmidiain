@@ -10,8 +10,8 @@
 # recria todos os containers da stack: queda do banco ⇒ fazer em janela).
 #
 # Projeto compose = ${RD_INSTANCE} (volumes <instância>_postgres-data etc.).
-# Cria a rede overlay ${RD_INSTANCE}-internal (attachable, sem saída) usada pela stack
-# Swarm. Requer `docker swarm init` no host. Variáveis: ops/portainer/dev-online.env.example.
+# Usa a rede overlay ${RD_INSTANCE}-internal (criada por ops/swarm/rd-instance-init.sh),
+# compartilhada com a stack Swarm. Requer `docker swarm init` no host. Variáveis: ops/portainer/dev-online.env.example.
 # Procedimento: ops/README.md §12.
 # =============================================================================
 
@@ -31,12 +31,12 @@ x-dbtools: &dbtools
   pull_policy: build
 
 networks:
-  # Rede interna da instância, compartilhada com a stack Swarm (overlay attachable).
+  # Rede interna da instância, compartilhada com a stack Swarm (overlay attachable, sem saída).
+  # EXTERNA: criada por ops/swarm/rd-instance-init.sh (criar overlay dentro do compose no
+  # Portainer teve corrida — "could not find a network matching network mode" na AÇÃO 007).
   internal:
     name: ${RD_INSTANCE}-internal
-    driver: overlay
-    attachable: true
-    internal: true          # sem rota para fora: banco/redis/observabilidade isolados
+    external: true
   # Portas publicadas SÓ em 127.0.0.1 (Grafana, Mailpit) — acesso por túnel SSH.
   local:
     driver: bridge
