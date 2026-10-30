@@ -548,10 +548,18 @@ Topologia de uma VPS com várias instâncias (dev agora; dev-teste e outras depo
 **Por que não cai (medido na AÇÃO 006/007):** o redeploy Git do Portainer em stack *compose* recria
 TODOS os containers (inclusive o banco) — ~40 s fora do ar. Em *Swarm*, o deploy só atualiza
 serviços cuja imagem/spec mudou; cada um sobe a tarefa nova, espera o healthcheck (`start_interval`
-de 1–2 s) e só então derruba a antiga. O backend novo só fica saudável depois que o job `migrate`
-levou o schema ao head do código da imagem (`backend/scripts/wait_for_schema.py`; banco à frente da
-imagem — rollback — também libera), então a versão antiga atende até lá. O painel recarrega sozinho
-uma vez se um chunk da versão anterior sumiu (`frontend/src/lib/chunkReload.ts`). O nginx sai com `SIGQUIT` (gracioso) e o Traefik tem retry para a janela da saída.
+de 1–2 s) e só então derruba a antiga:
+- backend/worker/bootstrap só sobem depois que o job `migrate` levou o schema ao head da imagem
+  (`backend/scripts/wait_for_schema.py`; banco à FRENTE da imagem — rollback — também libera);
+- backend, painel e player são alcançados pelo nginx via VIP do Swarm (só tarefas saudáveis);
+- o nginx da instância recebe tráfego do Traefik (provider docker, por eventos) com **health check
+  ativo** em `/__rd_ready` (1 s): no SIGTERM o nginx antigo responde 503 ali, sai do balanceamento e
+  só encerra 4 s depois (SIGQUIT); borda com `providersThrottleDuration=0s`, `dialTimeout=500ms` e retry;
+- o painel recarrega sozinho uma vez se um chunk da versão anterior sumiu (`frontend/src/lib/chunkReload.ts`).
+
+Medição de aceitação (AÇÃO 007): 3 trocas do nginx + 1 troca simultânea de nginx, painel, player,
+backend e worker — sonda na VPS a cada 50 ms (3 URLs): **7 626 requisições, 0 falhas**; log de acesso
+do Traefik: **9 210 requisições roteadas, 0 erros 5xx/conexão**. Reboot da VPS: tudo volta sozinho.
 
 **Regras obrigatórias para manter "sem queda":**
 - migrations **compatíveis com a versão anterior** (expandir → implantar → contrair): as duas
@@ -559,8 +567,10 @@ uma vez se um chunk da versão anterior sumiu (`frontend/src/lib/chunkReload.ts`
 - **nunca polling** para deploy (decisão do proprietário): gatilho só por evento (webhook do CI);
 - mudanças na stack de **dados** (`docker-compose.dev-data.yml`, `ops/`, `observability/`) NÃO
   passam pelo CI: reimplantar de propósito, em janela (o Portainer recria o banco);
-- segredos do Swarm são imutáveis: trocar o conteúdo de um arquivo de `RD_SECRETS_DIR` exige
-  renomear o segredo (ou remover a stack de aplicação e recriar);
+- segredos/config da aplicação são **externos** (`ops/swarm/rd-instance-init.sh`): o Portainer CE
+  2.45.2 quebra caminhos absolutos de `secrets: file:` em stack Swarm ("/data/compose/<id>//opt/…")
+  e o deploy falha em silêncio (o webhook responde 204 sem implantar). Segredos do Swarm são
+  imutáveis: para trocar um valor, crie `<inst>_<nome>_v2`, aponte a stack para ele e remova o antigo;
 - **labels do Traefik no nginx** (domínios, routers, middlewares) não mudam num deploy comum: durante
   o start-first os dois containers convivem e, com labels diferentes, o Traefik descarta o router
   ("defined multiple times with different configurations") ⇒ mudança de label = janela;
@@ -593,9 +603,15 @@ echo '{}' > $I/config/player_release_public_keys.json
 # alertmanager.yml: smarthost mailpit:1025 sem TLS (alertas no Mailpit da instância)
 ```
 
+No host, uma vez por instância (cria a overlay `<inst>-internal`, os segredos e o config Swarm):
+
+```bash
+RD_INSTANCE=rd-dev RD_SECRETS_DIR=$I/secrets RD_CONFIG_DIR=$I/config bash ops/swarm/rd-instance-init.sh
+```
+
 Ordem no Portainer (todas "Repository", referência `refs/heads/dev`, variáveis do `.env.example`):
 1. `rd-edge` → `ops/edge/docker-compose.edge.yml` (cria a overlay `rd-edge`);
-2. `rd-dev` → `docker-compose.dev-data.yml` (cria `rd-dev-internal`, banco, Redis…);
+2. `rd-dev` → `docker-compose.dev-data.yml` (banco, Redis… na rede `rd-dev-internal`);
 3. `rd-dev-app` → `docker-compose.dev-app.yml` como stack **Swarm**, com **webhook** ligado e
    "re-pull image"; a URL do webhook vai para o segredo `PORTAINER_WEBHOOK_DEV_APP` do repositório.
 
