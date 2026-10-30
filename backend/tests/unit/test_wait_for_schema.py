@@ -32,3 +32,18 @@ def test_banco_a_frente_da_imagem_segue_para_permitir_rollback():
 def test_sem_comando_retorna_erro_de_uso(capsys):
     assert wfs.main([]) == 2
     assert "uso:" in capsys.readouterr().err
+
+
+def test_executado_como_script_enxerga_o_pacote_app():
+    # Regressão (AÇÃO 007): executado como "python scripts/wait_for_schema.py" (como no
+    # container), o import de app.core.config falhava (ModuleNotFoundError) e o deploy travava.
+    import os
+    import subprocess
+    import sys
+
+    root = Path(__file__).resolve().parents[2]
+    env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}
+    env["RD_SCHEMA_WAIT_TIMEOUT"] = "0"
+    proc = subprocess.run([sys.executable, "scripts/wait_for_schema.py", "--", "true"],
+                          cwd=root, capture_output=True, text=True, env=env, timeout=60)
+    assert "ModuleNotFoundError" not in proc.stderr, proc.stderr[-400:]

@@ -23,6 +23,12 @@ import signal
 import sys
 import time
 
+# Executado como "python scripts/wait_for_schema.py": o Python põe scripts/ no path, não a
+# raiz da aplicação — sem isto "import app…" falha (mesma solução de migrations/env.py).
+APP_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if APP_ROOT not in sys.path:
+    sys.path.insert(0, APP_ROOT)
+
 READY, AHEAD, WAIT = "ready", "ahead", "wait"
 
 
