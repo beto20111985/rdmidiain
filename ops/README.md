@@ -582,19 +582,10 @@ compose `docker-compose.dev-online.yml`, variáveis de `ops/portainer/dev-online
 preenchidas. A borda: stack `rd-edge` (mesmo repositório, `ops/edge/docker-compose.edge.yml`),
 implantada **antes** das instâncias (cria a rede `rd-edge`).
 
-**GitOps (push no `dev` → deploy):** o polling nativo do Portainer CE 2.45.2 NÃO disparou nas stacks
-criadas pela API (AÇÃO 005: `AutoUpdate` gravado, `JobID` vazio, nenhum redeploy em 19 min). Por isso
-o host roda `ops/vps/rd-gitops-poll.sh` por timer do systemd (2 min): compara o commit do branch com o
-`ConfigHash` de cada stack e chama `PUT /api/stacks/{id}/git/redeploy` do Portainer (o deploy continua
-sendo do Portainer, a partir do Git). A borda só é reimplantada se `ops/edge/` mudou.
-
-```bash
-install -m 644 ops/vps/rd-gitops.service ops/vps/rd-gitops.timer /etc/systemd/system/
-systemctl daemon-reload && systemctl enable --now rd-gitops.timer
-journalctl -u rd-gitops.service -n 20        # histórico de verificações/redeploys
-```
-
-O redeploy do Portainer faz `down` + `up` da stack (≈1 min fora do ar a cada push; volumes preservados).
+**Deploy (redeploy da stack):** pelo Portainer, sob demanda — stack → *Pull and redeploy* (ou
+`PUT /api/stacks/{id}/git/redeploy`). **Polling é proibido** (decisão do proprietário, 2026-10-29):
+nem o auto-update por intervalo do Portainer nem timer/cron no host. O gatilho automático e o
+redeploy sem queda estão em análise (`stack/bk/006_*`).
 
 Acesso administrativo (somente loopback da VPS, via túnel SSH):
 `ssh -L 8025:127.0.0.1:8025 -L 3005:127.0.0.1:3005 root@<vps>` → Mailpit `http://localhost:8025`,
