@@ -152,17 +152,22 @@ services:
 
   # ─── BORDA DA INSTÂNCIA: headers, rate limit, roteamento (TLS no Traefik) ───
   # Labels do Traefik no CONTAINER (provider docker, por eventos); só containers
-  # saudáveis recebem tráfego. SIGQUIT = desligamento gracioso do nginx.
+  # saudáveis recebem tráfego.
+  # Saída sem queda (medido na AÇÃO 007): o Swarm para o nginx antigo no MESMO instante em
+  # que o novo fica saudável; sem folga, o Traefik às vezes ainda só conhece o antigo → 504.
+  # Ao receber SIGTERM o nginx antigo CONTINUA atendendo por RD_NGINX_DRAIN_S (3 s) — tempo
+  # de o Traefik incluir o novo — e só então sai de forma graciosa (SIGQUIT).
   nginx:
     image: ${RD_IMAGE_PREFIX:-ghcr.io/beto20111985/rdmidiain}/nginx:${RD_IMAGE_TAG:-dev}
+    entrypoint: ["/bin/sh", "-c", "/docker-entrypoint.sh nginx -g 'daemon off;' & pid=$$!; trap 'sleep $${RD_NGINX_DRAIN_S:-3}; kill -QUIT $$pid' TERM; wait $$pid; wait $$pid"]
     environment:
       NGINX_ENVSUBST_TEMPLATE_DIR: /etc/nginx/templates-proxied
       RD_PANEL_DOMAIN: ${RD_PANEL_DOMAIN}
       RD_API_DOMAIN: ${RD_API_DOMAIN}
       RD_PLAYER_DOMAIN: ${RD_PLAYER_DOMAIN}
       RD_TRUSTED_PROXY_CIDR: ${RD_TRUSTED_PROXY_CIDR:-10.250.0.2/32}
-    stop_signal: SIGQUIT
-    stop_grace_period: 20s
+    stop_signal: SIGTERM
+    stop_grace_period: 25s
     networks:
       - rd-edge
       - internal
