@@ -10,9 +10,9 @@
 # A API do Docker NÃO é montada no Traefik (exposto à internet): ele lê só a lista de
 # containers/eventos por um socket-proxy somente leitura numa rede interna própria.
 #
-# Cada instância se registra por labels no CONTAINER do próprio nginx (docker-compose.dev-app.yml,
-# serviço Swarm): o provider docker do Traefik segue os EVENTOS do Docker (sem polling) e só
-# roteia para containers saudáveis. Requer `docker swarm init` (rede overlay).
+# Cada instância: ROTAS em arquivo (ops/swarm/rd-instance-init.sh → RD_EDGE_DYNAMIC_DIR) e o
+# SERVIÇO por labels no container do próprio nginx (docker-compose.dev-app.yml, serviço Swarm): o
+# provider docker segue os EVENTOS do Docker (sem polling) e só roteia para containers saudáveis. Requer `docker swarm init` (rede overlay).
 # Nada de painel/dashboard do Traefik exposto. Portainer → Stack "rd-edge" (Git) ou:
 #   docker compose -f ops/edge/docker-compose.edge.yml -p rd-edge up -d
 # Procedimento: ops/README.md §12.
@@ -87,6 +87,11 @@ services:
       - --providers.docker.endpoint=tcp://socket-proxy:2375
       - --providers.docker.exposedbydefault=false
       - --providers.docker.network=${RD_EDGE_NETWORK:-rd-edge}
+      # Rotas das instâncias em ARQUIVO (gerado por ops/swarm/rd-instance-init.sh), recarregadas
+      # por evento de arquivo: mudar rota/domínio/middleware não toca nos containers que trocam
+      # a cada deploy (sem conflito "defined multiple times" e sem janela).
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.file.watch=true
       - --entrypoints.web.address=:80
       - --entrypoints.web.http.redirections.entrypoint.to=websecure
       - --entrypoints.web.http.redirections.entrypoint.scheme=https
@@ -113,6 +118,7 @@ services:
       - "443:443"
     volumes:
       - letsencrypt:/letsencrypt
+      - ${RD_EDGE_DYNAMIC_DIR:-/opt/rd-midiaindoor/edge/dynamic}:/etc/traefik/dynamic:ro
     networks:
       edge:
         ipv4_address: ${RD_EDGE_TRAEFIK_IP:-10.250.0.2}
