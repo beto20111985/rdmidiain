@@ -73,12 +73,30 @@ upstream rd_player_web {
 
 include /etc/nginx/snippets/internal-status.conf;
 
-# ─── Host desconhecido: descarta ──────────────────────────────────────────────
+# ─── Host desconhecido: descarta — exceto a prontidão para a borda ───────────
+# /__rd_ready: health check ATIVO do Traefik por servidor (Host = IP do container, cai
+# aqui). Ao receber SIGTERM o container cria /tmp/rd-draining (entrypoint da stack Swarm):
+# responde 503, o Traefik deixa de enviar requisições a ele e só depois o nginx sai —
+# deploy sem queda (AÇÃO 007). Não é alcançável pela internet: a borda só encaminha os
+# domínios da instância, que caem nos server blocks abaixo.
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
     server_name _;
-    return 444;
+
+    location = /__rd_ready {
+        access_log off;
+        default_type text/plain;
+        if (-f /tmp/rd-draining) {
+            return 503 "draining
+";
+        }
+        return 200 "ok
+";
+    }
+    location / {
+        return 444;
+    }
 }
 
 # ─── PAINEL + API + WS — https://${RD_PANEL_DOMAIN} (TLS na borda) ─────────────
