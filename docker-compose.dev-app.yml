@@ -12,7 +12,8 @@
 #   - update_config.order=start-first: a tarefa NOVA sobe e só entra no balanceamento
 #     quando o healthcheck passa; a ANTIGA sai depois (failure_action=rollback);
 #   - backend/worker/bootstrap só ficam saudáveis depois que o job "migrate" levou o
-#     schema ao head do código da imagem (espera em "alembic current … (head)");
+#     schema ao head do código da imagem (backend/scripts/wait_for_schema.py; banco À FRENTE
+#     da imagem — rollback — também libera, coberto pela regra expandir → contrair);
 #   - o Traefik (provider docker, por EVENTOS) roteia para os containers do nginx
 #     saudáveis; o middleware de retry cobre a saída do container antigo.
 # Regra obrigatória: migrations COMPATÍVEIS com a versão anterior (expandir → implantar
@@ -85,7 +86,7 @@ x-rolling: &rolling
     delay: 0s
     order: start-first
     failure_action: rollback
-    monitor: 15s
+    monitor: 20s
   rollback_config:
     parallelism: 1
     order: start-first
@@ -176,7 +177,7 @@ services:
       - "traefik.http.routers.${RD_INSTANCE}-player.middlewares=${RD_INSTANCE}-retry"
     healthcheck:
       test: ["CMD-SHELL", "nginx -t -q && wget -q -O /dev/null http://127.0.0.1:8081/nginx-health || exit 1"]
-      interval: 30s
+      interval: 10s
       timeout: 5s
       retries: 3
       start_period: 30s
@@ -196,7 +197,7 @@ services:
       - internal
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/ || exit 1"]
-      interval: 30s
+      interval: 10s
       timeout: 5s
       retries: 3
       start_period: 30s
@@ -216,7 +217,7 @@ services:
       - internal
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1"]
-      interval: 30s
+      interval: 10s
       timeout: 5s
       retries: 3
       start_period: 30s
@@ -240,6 +241,8 @@ services:
       POSTGRES_PASSWORD_FILE: /run/secrets/db_owner_password
       MANIFEST_SIGNING_KEY_FILE: ""
       PLAYER_RELEASE_PUBLIC_KEYS_FILE: ""
+      # Migração com o sistema no ar: não enfileirar atrás de transações longas (o job tenta de novo)
+      RD_MIGRATION_LOCK_TIMEOUT: 5s
     secrets:
       - db_owner_password
       - redis_password
@@ -259,8 +262,7 @@ services:
 
   bootstrap:
     image: ${RD_IMAGE_PREFIX:-ghcr.io/beto20111985/rdmidiain}/backend:${RD_IMAGE_TAG:-dev}
-    # Espera o schema chegar ao head (job migrate) antes de inicializar a instância.
-    command: ["sh", "-c", "t=0; until alembic current 2>/dev/null | grep -q '(head)'; do t=$$((t+2)); [ $$t -ge 600 ] && { echo 'schema não chegou ao head em 600 s' >&2; exit 1; }; sleep 2; done; exec python -m app.cli bootstrap-instance"]
+    command: ["python", "scripts/wait_for_schema.py", "--", "python", "-m", "app.cli", "bootstrap-instance"]
     environment:
       <<: *backend-env
       MANIFEST_SIGNING_KEY_FILE: ""
@@ -288,25 +290,26 @@ services:
         max_attempts: 6
 
   # ─── Aplicação ──────────────────────────────────────────────────────────────
-  # Só sobe o uvicorn depois que o schema está no head do código desta imagem:
-  # enquanto espera, a tarefa nova não fica saudável e a antiga continua atendendo.
+  # Portão de schema (scripts/wait_for_schema.py): o uvicorn só sobe com o banco no head desta
+  # imagem (ou à frente, no rollback); enquanto espera, a tarefa nova não fica saudável e a
+  # antiga continua atendendo.
   backend:
     image: ${RD_IMAGE_PREFIX:-ghcr.io/beto20111985/rdmidiain}/backend:${RD_IMAGE_TAG:-dev}
-    command: ["sh", "-c", "t=0; until alembic current 2>/dev/null | grep -q '(head)'; do t=$$((t+2)); [ $$t -ge 600 ] && { echo 'schema não chegou ao head em 600 s' >&2; exit 1; }; sleep 2; done; exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4 --log-level info"]
+    command: ["python", "scripts/wait_for_schema.py", "--", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4", "--log-level", "info"]
     environment:
       <<: *backend-env
     secrets: *backend-secrets
     configs: *backend-configs
     volumes:
       - media-storage:/app/media
-    stop_grace_period: 30s
+    stop_grace_period: 300s          # requisições em curso (uploads) terminam na tarefa antiga
     networks:
       - internal
       - egress
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
+      interval: 10s
+      timeout: 5s
       retries: 3
       start_period: 600s
       start_interval: 2s
@@ -321,7 +324,7 @@ services:
 
   worker:
     image: ${RD_IMAGE_PREFIX:-ghcr.io/beto20111985/rdmidiain}/backend:${RD_IMAGE_TAG:-dev}
-    command: ["sh", "-c", "t=0; until alembic current 2>/dev/null | grep -q '(head)'; do t=$$((t+2)); [ $$t -ge 600 ] && { echo 'schema não chegou ao head em 600 s' >&2; exit 1; }; sleep 2; done; exec celery -A app.workers.celery_app worker --loglevel=info --concurrency=${RD_WORKER_CONCURRENCY:-2} -Q ${RD_CELERY_QUEUES:-default,media,notifications,financial,reports}"]
+    command: ["python", "scripts/wait_for_schema.py", "--", "celery", "-A", "app.workers.celery_app", "worker", "--loglevel=info", "--concurrency=${RD_WORKER_CONCURRENCY:-2}", "-Q", "${RD_CELERY_QUEUES:-default,media,notifications,financial,reports}"]
     environment:
       <<: *backend-env
     secrets: *backend-secrets
@@ -352,7 +355,7 @@ services:
   # heartbeat e a troca start-first travaria). Alguns segundos sem agendamento não afetam o usuário.
   worker-beat:
     image: ${RD_IMAGE_PREFIX:-ghcr.io/beto20111985/rdmidiain}/backend:${RD_IMAGE_TAG:-dev}
-    command: ["sh", "-c", "t=0; until alembic current 2>/dev/null | grep -q '(head)'; do t=$$((t+2)); [ $$t -ge 600 ] && { echo 'schema não chegou ao head em 600 s' >&2; exit 1; }; sleep 2; done; exec celery -A app.workers.celery_app beat --loglevel=info --scheduler redbeat.RedBeatScheduler"]
+    command: ["python", "scripts/wait_for_schema.py", "--", "celery", "-A", "app.workers.celery_app", "beat", "--loglevel=info", "--scheduler", "redbeat.RedBeatScheduler"]
     environment:
       <<: *backend-env
     secrets: *backend-secrets

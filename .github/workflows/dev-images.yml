@@ -1,14 +1,18 @@
 # =============================================================================
 # RD Mídia Indoor — imagens da APLICAÇÃO do ambiente DEV + deploy por EVENTO (AÇÃO 007)
 # -----------------------------------------------------------------------------
-# push no branch dev → constrói backend, frontend, player-web (target production) e nginx,
-# publica no GHCR (:dev e :sha-<commit>) e, se o segredo existir, chama o webhook da
-# stack Swarm "rd-dev-app" no Portainer. O Swarm troca as tarefas uma a uma
-# (start-first + healthcheck): sem queda. Nada de polling (decisão do proprietário).
+# push no branch dev:
+#   1. detecta quais imagens mudaram (backend, frontend, player-web, nginx) desde o push anterior;
+#   2. constrói SÓ essas e publica no GHCR com :sha-<commit>;
+#   3. depois que TODAS terminaram, promove cada uma para :dev (sem estado misto em falha);
+#   4. chama o webhook da stack Swarm "rd-dev-app" no Portainer (segredo abaixo).
+# Imagem que não mudou mantém o mesmo :dev ⇒ o Swarm não troca aquele serviço.
+# O Swarm troca as tarefas uma a uma (start-first + healthcheck): sem queda.
+# Nada de polling (decisão do proprietário).
 #
 # Segredo do repositório (opcional; sem ele só publica as imagens):
 #   PORTAINER_WEBHOOK_DEV_APP = URL completa do webhook da stack rd-dev-app
-# O Portainer da VPS usa certificado autoassinado → curl -k (URL é o segredo).
+# O Portainer da VPS usa certificado autoassinado → curl -k (a URL é o segredo).
 # =============================================================================
 name: dev-images
 
@@ -30,16 +34,45 @@ env:
   IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/rdmidiain
 
 jobs:
+  changes:
+    if: github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.detect.outputs.matrix }}
+      any: ${{ steps.detect.outputs.any }}
+      deploy: ${{ steps.detect.outputs.deploy }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: detect
+        env:
+          BEFORE: ${{ github.event.before }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          all='[{"image":"backend","target":"production"},{"image":"frontend","target":"production"},{"image":"player-web","target":"production"},{"image":"nginx","target":""}]'
+          if [ "$EVENT" != "push" ] || [ -z "$BEFORE" ] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            echo "matrix=$all" >> "$GITHUB_OUTPUT"; echo "any=true" >> "$GITHUB_OUTPUT"; echo "deploy=true" >> "$GITHUB_OUTPUT"
+            echo "sem push anterior conhecido: todas as imagens"; exit 0
+          fi
+          changed="$(git diff --name-only "$BEFORE" "$GITHUB_SHA")"
+          sel=$(echo "$all" | jq -c --arg c "$changed" '[.[] | select(.image as $i | ($c | split("\n") | any(startswith($i + "/"))))]')
+          echo "matrix=$sel" >> "$GITHUB_OUTPUT"
+          any=$( [ "$sel" = "[]" ] && echo false || echo true )
+          echo "any=$any" >> "$GITHUB_OUTPUT"
+          # stack da aplicação mudou sem imagem nova (variável, réplica, healthcheck…) também implanta
+          stack=$(echo "$changed" | grep -qx 'docker-compose.dev-app.yml' && echo true || echo false)
+          echo "deploy=$( [ "$any" = true ] || [ "$stack" = true ] && echo true || echo false )" >> "$GITHUB_OUTPUT"
+          echo "imagens a construir: $sel"
+
   build:
+    needs: changes
+    if: needs.changes.outputs.any == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
       matrix:
-        include:
-          - { image: backend,    target: production }
-          - { image: frontend,   target: production }
-          - { image: player-web, target: production }
-          - { image: nginx,      target: "" }
+        include: ${{ fromJson(needs.changes.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
 
@@ -51,16 +84,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build e push ${{ matrix.image }}
+      - name: Build e push ${{ matrix.image }} (:sha-<commit>)
         uses: docker/build-push-action@v6
         with:
           context: ./${{ matrix.image }}
           target: ${{ matrix.target }}
           push: true
           provenance: false
-          tags: |
-            ${{ env.IMAGE_PREFIX }}/${{ matrix.image }}:dev
-            ${{ env.IMAGE_PREFIX }}/${{ matrix.image }}:sha-${{ github.sha }}
+          tags: ${{ env.IMAGE_PREFIX }}/${{ matrix.image }}:sha-${{ github.sha }}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
@@ -68,10 +99,30 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.image }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image }}
 
+  # Só depois de TODAS as imagens construídas: :dev aponta para as novas e o deploy é disparado.
   deploy:
-    needs: build
+    needs: [changes, build]
+    if: always() && needs.changes.outputs.deploy == 'true' && (needs.build.result == 'success' || needs.build.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Promover para :dev
+        if: needs.changes.outputs.any == 'true'
+        env:
+          MATRIX: ${{ needs.changes.outputs.matrix }}
+        run: |
+          for img in $(echo "$MATRIX" | jq -r '.[].image'); do
+            docker buildx imagetools create -t "$IMAGE_PREFIX/$img:dev" "$IMAGE_PREFIX/$img:sha-$GITHUB_SHA"
+            echo "promovida: $img → :dev"
+          done
+
       - name: Disparar redeploy da stack rd-dev-app (Portainer)
         env:
           WEBHOOK: ${{ secrets.PORTAINER_WEBHOOK_DEV_APP }}

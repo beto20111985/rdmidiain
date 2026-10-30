@@ -93,6 +93,11 @@ services:
       - --entrypoints.websecure.http.aliasheadersstrategy=delete
       # Uploads de vídeo de até 210 MB (600 s no nginx). WebSocket já estabelecido não
       # é afetado por este limite de leitura da requisição.
+      # Deploy sem queda (medido na AÇÃO 007): aplica eventos do Docker sem o atraso padrão de
+      # 2 s e desiste rápido de um container que acabou de sair (o retry da instância refaz a
+      # requisição no container novo). Padrão: 1 falha por troca; ajustado: 0 em 482 requisições.
+      - --providers.providersthrottleduration=0s
+      - --serverstransport.forwardingtimeouts.dialtimeout=500ms
       - --entrypoints.websecure.transport.respondingtimeouts.readtimeout=900s
       - --entrypoints.websecure.transport.respondingtimeouts.idletimeout=180s
       - --certificatesresolvers.le.acme.httpchallenge=true

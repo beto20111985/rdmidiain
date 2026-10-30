@@ -71,10 +71,22 @@ def run_migrations_online() -> None:
     Executa migrations em modo online (conexão ativa ao banco).
     Usa psycopg2 síncrono (NÃO asyncpg) — Alembic não suporta async nativamente.
     """
+    # Migração com o sistema NO AR (deploy sem queda, AÇÃO 007): RD_MIGRATION_LOCK_TIMEOUT
+    # (ex.: "5s") faz um ALTER que esperaria atrás de uma transação longa falhar rápido em vez
+    # de enfileirar todas as queries do sistema atrás dele; o job de migração tenta de novo.
+    lock_timeout = os.environ.get("RD_MIGRATION_LOCK_TIMEOUT", "").strip()
+    connect_args = {}
+    if lock_timeout:
+        import re
+
+        if not re.fullmatch(r"\d+(ms|s|min)?", lock_timeout):
+            raise SystemExit("RD_MIGRATION_LOCK_TIMEOUT inválido (ex.: 5s, 500ms)")
+        connect_args["options"] = f"-c lock_timeout={lock_timeout}"
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,  # NullPool: não reutilizar conexões em migrations
+        connect_args=connect_args,
     )
 
     with connectable.connect() as connection:

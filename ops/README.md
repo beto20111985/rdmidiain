@@ -549,8 +549,9 @@ Topologia de uma VPS com várias instâncias (dev agora; dev-teste e outras depo
 TODOS os containers (inclusive o banco) — ~40 s fora do ar. Em *Swarm*, o deploy só atualiza
 serviços cuja imagem/spec mudou; cada um sobe a tarefa nova, espera o healthcheck (`start_interval`
 de 1–2 s) e só então derruba a antiga. O backend novo só fica saudável depois que o job `migrate`
-levou o schema ao head do código da imagem (`alembic current … (head)`), então a versão antiga
-atende até lá. O nginx sai com `SIGQUIT` (gracioso) e o Traefik tem retry para a janela da saída.
+levou o schema ao head do código da imagem (`backend/scripts/wait_for_schema.py`; banco à frente da
+imagem — rollback — também libera), então a versão antiga atende até lá. O painel recarrega sozinho
+uma vez se um chunk da versão anterior sumiu (`frontend/src/lib/chunkReload.ts`). O nginx sai com `SIGQUIT` (gracioso) e o Traefik tem retry para a janela da saída.
 
 **Regras obrigatórias para manter "sem queda":**
 - migrations **compatíveis com a versão anterior** (expandir → implantar → contrair): as duas
@@ -559,7 +560,20 @@ atende até lá. O nginx sai com `SIGQUIT` (gracioso) e o Traefik tem retry para
 - mudanças na stack de **dados** (`docker-compose.dev-data.yml`, `ops/`, `observability/`) NÃO
   passam pelo CI: reimplantar de propósito, em janela (o Portainer recria o banco);
 - segredos do Swarm são imutáveis: trocar o conteúdo de um arquivo de `RD_SECRETS_DIR` exige
-  renomear o segredo (ou remover a stack de aplicação e recriar).
+  renomear o segredo (ou remover a stack de aplicação e recriar);
+- **labels do Traefik no nginx** (domínios, routers, middlewares) não mudam num deploy comum: durante
+  o start-first os dois containers convivem e, com labels diferentes, o Traefik descarta o router
+  ("defined multiple times with different configurations") ⇒ mudança de label = janela;
+- o webhook da stack é criado com **"Re-pull image" e "Force redeployment"** ligados (sem o force, o
+  Portainer ignora o webhook quando o commit já foi implantado e a imagem nova nunca entraria);
+- o CI publica `:sha-<commit>` e só move `:dev` depois de **todas** as imagens construídas; imagem
+  sem mudança mantém o mesmo digest e o Swarm não toca no serviço;
+- o webhook responde antes do fim do rollout: falha de rollout (rollback automático) aparece no
+  Portainer (serviço → *Update status*) e nos logs — conferir após mudanças grandes.
+
+Ajustes da borda medidos (AÇÃO 007, serviço de teste com 3 trocas e requisição a cada 50 ms): Traefik
+padrão = 1 falha por troca (o throttle de 2 s mantém o IP do container que saiu e a conexão espera
+o timeout); `providersThrottleDuration=0s` + `dialTimeout=500ms` + retry = 0 falhas (pior latência ~1 s).
 
 Preparação do host (uma vez, root): Docker CE + compose; firewall 22/80/443/9443; `docker swarm init
 --advertise-addr <ip>`; Portainer CE montando `/opt/rd-midiaindoor/instancias` somente leitura no
