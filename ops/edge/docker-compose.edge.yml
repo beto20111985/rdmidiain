@@ -10,7 +10,9 @@
 # A API do Docker NÃO é montada no Traefik (exposto à internet): ele lê só a lista de
 # containers/eventos por um socket-proxy somente leitura numa rede interna própria.
 #
-# Cada instância se registra por labels no próprio nginx (docker-compose.dev-online.yml).
+# Cada instância se registra por labels no CONTAINER do próprio nginx (docker-compose.dev-app.yml,
+# serviço Swarm): o provider docker do Traefik segue os EVENTOS do Docker (sem polling) e só
+# roteia para containers saudáveis. Requer `docker swarm init` (rede overlay).
 # Nada de painel/dashboard do Traefik exposto. Portainer → Stack "rd-edge" (Git) ou:
 #   docker compose -f ops/edge/docker-compose.edge.yml -p rd-edge up -d
 # Procedimento: ops/README.md §12.
@@ -19,12 +21,17 @@
 name: rd-edge
 
 networks:
+  # Overlay ATTACHABLE (AÇÃO 007): o nginx das instâncias roda como serviço Swarm e
+  # entra nesta rede. IPs dinâmicos SÓ na metade alta (ip_range): o IP fixo do Traefik
+  # (10.250.0.2) nunca é entregue a outro container (o único proxy confiável).
   edge:
     name: ${RD_EDGE_NETWORK:-rd-edge}
-    driver: bridge
+    driver: overlay
+    attachable: true
     ipam:
       config:
         - subnet: ${RD_EDGE_SUBNET:-10.250.0.0/24}
+          ip_range: ${RD_EDGE_IP_RANGE:-10.250.0.128/25}
   docker-api:
     driver: bridge
     internal: true

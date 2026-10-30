@@ -1,0 +1,397 @@
+# =============================================================================
+# RD Mídia Indoor — DEV ONLINE · STACK DE DADOS (compose; Portainer → Stack via Git) — AÇÃO 007
+# -----------------------------------------------------------------------------
+# Serviços COM ESTADO e de apoio, que NÃO mudam a cada deploy da aplicação:
+# PostgreSQL, Redis, papéis do banco, backup, Mailpit e observabilidade.
+# A aplicação (nginx, backend, workers, painel, player) roda na stack SWARM
+# docker-compose.dev-app.yml, que troca tarefas sem queda (start-first) e NÃO toca
+# nestes serviços. Por isso esta stack só é reimplantada quando ESTE arquivo (ou
+# ops/, observability/) muda — e por ação deliberada (o redeploy Git do Portainer
+# recria todos os containers da stack: queda do banco ⇒ fazer em janela).
+#
+# Projeto compose = ${RD_INSTANCE} (volumes <instância>_postgres-data etc.).
+# Cria a rede overlay ${RD_INSTANCE}-internal (attachable, sem saída) usada pela stack
+# Swarm. Requer `docker swarm init` no host. Variáveis: ops/portainer/dev-online.env.example.
+# Procedimento: ops/README.md §12.
+# =============================================================================
+
+name: ${RD_INSTANCE:?defina RD_INSTANCE}
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "20m"
+    max-file: "5"
+
+x-dbtools: &dbtools
+  build:
+    context: ./ops
+    dockerfile: dbtools/Dockerfile
+  image: rd-midiaindoor/dbtools:${RD_INSTANCE}
+  pull_policy: build
+
+networks:
+  # Rede interna da instância, compartilhada com a stack Swarm (overlay attachable).
+  internal:
+    name: ${RD_INSTANCE}-internal
+    driver: overlay
+    attachable: true
+    internal: true          # sem rota para fora: banco/redis/observabilidade isolados
+  # Portas publicadas SÓ em 127.0.0.1 (Grafana, Mailpit) — acesso por túnel SSH.
+  local:
+    driver: bridge
+  egress:
+    driver: bridge          # saída controlada (cópia externa de backup)
+
+volumes:
+  postgres-data:
+  redis-data:
+  db-backups:
+  mailpit-data:
+  prometheus-data:
+  alertmanager-data:
+  loki-data:
+  promtail-positions:
+  grafana-data:
+
+secrets:
+  postgres_superuser_password:
+    file: ${RD_SECRETS_DIR:?defina RD_SECRETS_DIR}/postgres_superuser_password
+  db_owner_password:
+    file: ${RD_SECRETS_DIR}/db_owner_password
+  db_app_password:
+    file: ${RD_SECRETS_DIR}/db_app_password
+  db_backup_password:
+    file: ${RD_SECRETS_DIR}/db_backup_password
+  redis_password:
+    file: ${RD_SECRETS_DIR}/redis_password
+  backup_passphrase:
+    file: ${RD_SECRETS_DIR}/backup_passphrase
+  grafana_admin_password:
+    file: ${RD_SECRETS_DIR}/grafana_admin_password
+
+configs:
+  alertmanager_config:
+    file: ${RD_CONFIG_DIR:?defina RD_CONFIG_DIR}/alertmanager.yml
+
+services:
+
+  postgres:
+    image: postgres:16.15-alpine
+    restart: unless-stopped
+    shm_size: 256m
+    environment:
+      POSTGRES_DB: ${RD_DB_NAME:-rdmidiaindoor}
+      POSTGRES_USER: ${RD_DB_SUPERUSER:-rd_super}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_superuser_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=pt_BR.UTF-8 --lc-ctype=pt_BR.UTF-8"
+    secrets:
+      - postgres_superuser_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - internal
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${RD_DB_SUPERUSER:-rd_super} -d ${RD_DB_NAME:-rdmidiaindoor}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_interval: 1s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+
+  redis:
+    image: redis:7.4.8-alpine
+    restart: unless-stopped
+    user: redis
+    command: ["sh", "-c", "umask 077; printf 'requirepass %s\\nappendonly yes\\ndir /data\\n' \"$$(cat /run/secrets/redis_password)\" > /tmp/redis.conf && exec redis-server /tmp/redis.conf"]
+    secrets:
+      - redis_password
+    volumes:
+      - redis-data:/data
+    networks:
+      - internal
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$(cat /run/secrets/redis_password)\" redis-cli ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_interval: 1s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+
+  # Papéis rd_owner / rd_app / rd_backup (idempotente). As migrations rodam na stack
+  # Swarm (job "migrate"), que tenta de novo até os papéis existirem.
+  db-init:
+    <<: *dbtools
+    restart: "no"
+    command: ["rd-db-init"]
+    environment:
+      RD_DB_NAME: ${RD_DB_NAME:-rdmidiaindoor}
+      RD_DB_SUPERUSER: ${RD_DB_SUPERUSER:-rd_super}
+      RD_DB_SUPERUSER_PASSWORD_FILE: /run/secrets/postgres_superuser_password
+      RD_DB_TRANSFER_OWNERSHIP: "on"
+    secrets:
+      - postgres_superuser_password
+      - db_owner_password
+      - db_app_password
+      - db_backup_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+    logging: *default-logging
+
+  db-backup:
+    <<: *dbtools
+    restart: unless-stopped
+    init: true
+    command: ["rd-backup-scheduler"]
+    environment:
+      TZ: America/Sao_Paulo
+      RD_DB_NAME: ${RD_DB_NAME:-rdmidiaindoor}
+      RD_BACKUP_DB_USER: rd_backup
+      RD_BACKUP_DB_PASSWORD_FILE: /run/secrets/db_backup_password
+      RD_BACKUP_PASSPHRASE_FILE: /run/secrets/backup_passphrase
+      RD_BACKUP_AT: ${RD_BACKUP_AT:-03:00}
+      RD_BACKUP_KEEP_DAILY: "7"
+      RD_BACKUP_KEEP_WEEKLY: "4"
+      RD_BACKUP_KEEP_MONTHLY: "3"
+      RD_BACKUP_COUNT_ROWS: ${RD_BACKUP_COUNT_ROWS:-1}
+      RD_BACKUP_OFFSITE_CMD: ${RD_BACKUP_OFFSITE_CMD:-}
+    secrets:
+      - db_backup_password
+      - backup_passphrase
+    volumes:
+      - db-backups:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    networks:
+      - internal
+      - egress
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "rd-backup-healthcheck"]
+      interval: 5m
+      timeout: 10s
+      retries: 1
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+
+  backup-metrics:
+    <<: *dbtools
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=1m
+    command: ["rd-backup-metrics"]
+    environment:
+      TZ: America/Sao_Paulo
+      RD_METRICS_PORT: "9101"
+      RD_BACKUP_MAX_AGE_H: "26"
+      RD_DRILL_MAX_AGE_DAYS: ${RD_DRILL_MAX_AGE_DAYS:-35}
+      RD_BACKUP_OFFSITE_REQUIRED: ${RD_BACKUP_OFFSITE_REQUIRED:-false}
+    volumes:
+      - db-backups:/backups:ro
+    networks:
+      - internal
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9101/metrics.prom"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 32M
+
+  db-restore:
+    <<: *dbtools
+    profiles: ["ops"]
+    restart: "no"
+    command: ["rd-restore-drill"]
+    environment:
+      TZ: America/Sao_Paulo
+      RD_DB_NAME: ${RD_DB_NAME:-rdmidiaindoor}
+      RD_DB_SUPERUSER: ${RD_DB_SUPERUSER:-rd_super}
+      RD_DB_SUPERUSER_PASSWORD_FILE: /run/secrets/postgres_superuser_password
+      RD_BACKUP_PASSPHRASE_FILE: /run/secrets/backup_passphrase
+    secrets:
+      - postgres_superuser_password
+      - backup_passphrase
+    volumes:
+      - db-backups:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+    logging: *default-logging
+
+  # ─── E-mail de DESENVOLVIMENTO (nada sai para a internet) ───────────────────
+  mailpit:
+    image: axllent/mailpit:v1.28
+    restart: unless-stopped
+    environment:
+      MP_DATABASE: /data/mailpit.db
+      MP_MAX_MESSAGES: "5000"
+      TZ: America/Sao_Paulo
+    volumes:
+      - mailpit-data:/data
+    ports:
+      - "127.0.0.1:${RD_MAILPIT_PORT:-8025}:8025"
+    networks:
+      - internal
+      - local
+    logging: *default-logging
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+
+  # ─── Observabilidade (mesma da produção) ────────────────────────────────────
+  prometheus:
+    build:
+      context: ./observability/prometheus
+    image: rd-midiaindoor/prometheus:${RD_INSTANCE}
+    pull_policy: build
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${RD_PROMETHEUS_RETENTION:-7d}
+      - --storage.tsdb.retention.size=${RD_PROMETHEUS_RETENTION_SIZE:-2GB}
+    volumes:
+      - prometheus-data:/prometheus
+    networks:
+      - internal
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+
+  alertmanager:
+    build:
+      context: ./observability/alertmanager
+    image: rd-midiaindoor/alertmanager:${RD_INSTANCE}
+    pull_policy: build
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/alertmanager/rd-instance.yml
+      - --storage.path=/alertmanager
+      - --cluster.listen-address=
+    configs:
+      - source: alertmanager_config
+        target: /etc/alertmanager/rd-instance.yml
+    volumes:
+      - alertmanager-data:/alertmanager
+    networks:
+      - internal
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
+  loki:
+    build:
+      context: ./observability/loki
+    image: rd-midiaindoor/loki:${RD_INSTANCE}
+    pull_policy: build
+    restart: unless-stopped
+    volumes:
+      - loki-data:/loki
+    networks:
+      - internal
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+
+  promtail:
+    build:
+      context: ./observability/promtail
+    image: rd-midiaindoor/promtail:${RD_INSTANCE}
+    pull_policy: build
+    restart: unless-stopped
+    environment:
+      RD_COMPOSE_PROJECT: ${RD_INSTANCE}
+      # containers da stack Swarm da aplicação (docker-compose.dev-app.yml)
+      RD_SWARM_STACK: ${RD_INSTANCE}-app
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - promtail-positions:/promtail
+    networks:
+      - internal
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
+  grafana:
+    build:
+      context: ./observability/grafana
+    image: rd-midiaindoor/grafana:${RD_INSTANCE}
+    pull_policy: build
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_admin_password
+      GF_SECURITY_DISABLE_GRAVATAR: "true"
+      GF_SECURITY_COOKIE_SAMESITE: strict
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+      GF_PLUGINS_PREINSTALL_DISABLED: "true"
+      GF_DATE_FORMATS_DEFAULT_TIMEZONE: America/Sao_Paulo
+    secrets:
+      - grafana_admin_password
+    volumes:
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:${RD_GRAFANA_PORT:-3005}:3000"
+    networks:
+      - internal
+      - local
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M

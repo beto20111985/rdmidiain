@@ -1,6 +1,7 @@
 # =============================================================================
-# RD Mídia Indoor — Promtail: coleta SOMENTE os containers do projeto compose
-# (label com.docker.compose.project=${RD_COMPOSE_PROJECT}) via Docker API e envia
+# RD Mídia Indoor — Promtail: coleta SOMENTE os containers da instância — projeto compose
+# (com.docker.compose.project=${RD_COMPOSE_PROJECT}) e, se houver, a stack Swarm
+# (com.docker.stack.namespace=${RD_SWARM_STACK}) — via Docker API e envia
 # ao Loki. Redige segredos ANTES do envio (tokens em query string, Bearer, campos
 # JSON sensíveis) — defesa em profundidade para logs de uvicorn/nginx/workers.
 # Executado com -config.expand-env=true.
@@ -38,7 +39,7 @@ scrape_configs:
         target_label: project
       - source_labels: ["__meta_docker_container_log_stream"]
         target_label: stream
-    pipeline_stages:
+    pipeline_stages: &rd_redact
       # 1) parâmetros sensíveis em URLs/query strings: ?token=…, &ticket=…, code=…
       - replace:
           expression: '(?i)(?:^|[?&;\s"''])(?:access_token|refresh_token|id_token|token|ticket|secret|device_secret|password|passwd|pwd|signature|sig|code|otp|totp|api_key|apikey)=([^&\s"'';]+)'
@@ -55,3 +56,26 @@ scrape_configs:
       - replace:
           expression: '[a-z][a-z0-9+.\-]*://[^:/\s@]*:([^@\s/]+)@'
           replace: "[REDACTED]"
+
+  # Containers de uma stack SWARM da mesma instância (AÇÃO 007: aplicação em Swarm,
+  # label com.docker.stack.namespace=${RD_SWARM_STACK}). Sem RD_SWARM_STACK (local e
+  # compose de produção) o filtro não casa com nenhum container. Mesma redação de segredos.
+  - job_name: rd-swarm
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 15s
+        filters:
+          - name: label
+            values: ["com.docker.stack.namespace=${RD_SWARM_STACK}"]
+    relabel_configs:
+      - source_labels: ["__meta_docker_container_name"]
+        regex: "/(.*)"
+        target_label: container
+      - source_labels: ["__meta_docker_container_label_com_docker_swarm_service_name"]
+        regex: "[^_]+_(.*)"
+        target_label: compose_service
+      - source_labels: ["__meta_docker_container_label_com_docker_stack_namespace"]
+        target_label: project
+      - source_labels: ["__meta_docker_container_log_stream"]
+        target_label: stream
+    pipeline_stages: *rd_redact

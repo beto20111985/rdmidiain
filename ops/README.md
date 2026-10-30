@@ -531,36 +531,39 @@ Produção nunca expõe PostgreSQL/Redis/Prometheus/Loki; a rede `internal` não
   por `COPY`.
 - `.gitattributes`: scripts/configs com LF (CRLF quebra `sh` e nginx nos containers).
 
-## 12. DEV online na VPS de testes (Portainer + Git + borda compartilhada) — AÇÃO 005
+## 12. DEV online na VPS de testes — Swarm, deploy sem queda e gatilho por evento (AÇÕES 005/007)
 
-Topologia de uma VPS com várias instâncias (dev agora; dev-teste e outras depois):
+Topologia de uma VPS com várias instâncias (dev agora; dev-teste e outras depois). Host em
+**Docker Swarm de um nó** (`docker swarm init`; portas do cluster fechadas no firewall; sem
+`live-restore` no daemon — incompatível com Swarm).
 
-| Peça | Arquivo | Papel |
-|---|---|---|
-| Borda compartilhada (1 por VPS) | `ops/edge/docker-compose.edge.yml` (stack `rd-edge`) | Traefik: portas 80/443, TLS Let's Encrypt (HTTP-01), redirect HTTP→HTTPS; lê containers por socket-proxy somente leitura; IP fixo `10.250.0.2` na rede `rd-edge` |
-| Instância DEV | `docker-compose.dev-online.yml` (raiz; stack `rd-dev`) | imagens **construídas do código** a cada deploy (`pull_policy: build`); `ENVIRONMENT=development` (pagamento FALSO, OpenAPI em `api-dev`, e-mails no Mailpit); nginx da instância sem porta no host (`nginx/prod/templates-proxied/`) |
-| Variáveis da instância | `ops/portainer/dev-online.env.example` | domínios, diretórios de segredos/config, bootstrap |
+| Peça | Arquivo | Tipo | Papel |
+|---|---|---|---|
+| Borda (1 por VPS) | `ops/edge/docker-compose.edge.yml` (stack `rd-edge`) | compose | Traefik 80/443 + Let's Encrypt; provider **docker por eventos** via socket-proxy somente leitura; rede `rd-edge` overlay attachable, Traefik com IP fixo `10.250.0.2` (fora do `ip_range` dinâmico) |
+| Dados da instância | `docker-compose.dev-data.yml` (stack `<inst>`, ex.: `rd-dev`) | compose | PostgreSQL, Redis, papéis, backup, Mailpit, observabilidade; cria a overlay `<inst>-internal`. **Não muda a cada deploy** |
+| Aplicação da instância | `docker-compose.dev-app.yml` (stack `<inst>-app`) | **Swarm** | nginx da instância, painel, Player Web, backend, worker, beat, jobs `migrate`/`bootstrap`; imagens do GHCR; troca **start-first** com rollback |
+| Imagens + gatilho | `.github/workflows/dev-images.yml` | GitHub Actions | push em `dev` → build de backend/frontend/player-web/nginx → GHCR (`:dev`, `:sha-<commit>`) → POST no **webhook da stack** `<inst>-app` |
+| Variáveis | `ops/portainer/dev-online.env.example` | — | as mesmas nas duas stacks da instância |
 
-Domínios da instância: painel `RD_PANEL_DOMAIN` (SPA + `/api` + `/ws` na mesma origem — contrato
-do painel), API direta `RD_API_DOMAIN` (`/api`, `/ws`, `/health`, `/api/v1/docs`) e Player Web
-`RD_PLAYER_DOMAIN` (só rotas do player). O nginx da instância só aceita `X-Forwarded-*` do IP fixo
-do Traefik (`RD_TRUSTED_PROXY_CIDR=10.250.0.2/32`): rate limit e auditoria usam o IP real do cliente.
-Sem registro AAAA nos domínios (rede da borda é só IPv4; IPv6 chegaria com o IP do gateway).
+**Por que não cai (medido na AÇÃO 006/007):** o redeploy Git do Portainer em stack *compose* recria
+TODOS os containers (inclusive o banco) — ~40 s fora do ar. Em *Swarm*, o deploy só atualiza
+serviços cuja imagem/spec mudou; cada um sobe a tarefa nova, espera o healthcheck (`start_interval`
+de 1–2 s) e só então derruba a antiga. O backend novo só fica saudável depois que o job `migrate`
+levou o schema ao head do código da imagem (`alembic current … (head)`), então a versão antiga
+atende até lá. O nginx sai com `SIGQUIT` (gracioso) e o Traefik tem retry para a janela da saída.
 
-Preparação do host (uma vez, root):
+**Regras obrigatórias para manter "sem queda":**
+- migrations **compatíveis com a versão anterior** (expandir → implantar → contrair): as duas
+  versões convivem alguns segundos;
+- **nunca polling** para deploy (decisão do proprietário): gatilho só por evento (webhook do CI);
+- mudanças na stack de **dados** (`docker-compose.dev-data.yml`, `ops/`, `observability/`) NÃO
+  passam pelo CI: reimplantar de propósito, em janela (o Portainer recria o banco);
+- segredos do Swarm são imutáveis: trocar o conteúdo de um arquivo de `RD_SECRETS_DIR` exige
+  renomear o segredo (ou remover a stack de aplicação e recriar).
 
-```bash
-# Docker CE + compose plugin; firewall: 22, 80, 443, 9443
-install -d -m 700 /opt/rd-midiaindoor/instancias
-docker run -d --name portainer --restart=always -p 9443:9443 \
-  -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data \
-  -v /opt/rd-midiaindoor/instancias:/opt/rd-midiaindoor/instancias:ro \
-  portainer/portainer-ce:2.45.2 --admin-password-file <arquivo com a senha>
-```
-
-A montagem de `/opt/rd-midiaindoor/instancias` **no mesmo caminho** dentro do Portainer é
-obrigatória: o compose roda dentro do container do Portainer e precisa enxergar os arquivos de
-`secrets:`/`configs:` (somente leitura).
+Preparação do host (uma vez, root): Docker CE + compose; firewall 22/80/443/9443; `docker swarm init
+--advertise-addr <ip>`; Portainer CE montando `/opt/rd-midiaindoor/instancias` somente leitura no
+mesmo caminho (o Portainer lê dali os arquivos de `secrets:`/`configs:`).
 
 Por instância (ex.: `rd-dev`):
 
@@ -570,28 +573,21 @@ install -d -m 700 $I/secrets $I/config
 RD_SECRETS_DIR=$I/secrets bash ops/dev/generate-secrets.sh       # + manifest_signing_key
 # segredo do provedor FALSO (assina/valida webhooks simulados) — 64 alfanuméricos
 ( umask 077; openssl rand -base64 96 | tr -dc 'A-Za-z0-9' | head -c 64 > $I/secrets/cloudpaypag_webhook_secret )
-# 0444 como os demais (generate-secrets.sh): fora do Swarm o segredo é bind mount com dono/modo
-# do host e o backend roda como "rdapp" — com 0600 a configuração recusa carregar.
+# 0444 como os demais: o backend roda como "rdapp" e lê o arquivo montado
 chmod 444 $I/secrets/cloudpaypag_webhook_secret
 echo '{}' > $I/config/player_release_public_keys.json
 # alertmanager.yml: smarthost mailpit:1025 sem TLS (alertas no Mailpit da instância)
 ```
 
-Portainer → Stacks → Add stack → **Repository**: URL do repositório, referência `refs/heads/dev`,
-compose `docker-compose.dev-online.yml`, variáveis de `ops/portainer/dev-online.env.example`
-preenchidas. A borda: stack `rd-edge` (mesmo repositório, `ops/edge/docker-compose.edge.yml`),
-implantada **antes** das instâncias (cria a rede `rd-edge`).
-
-**Deploy (redeploy da stack):** pelo Portainer, sob demanda — stack → *Pull and redeploy* (ou
-`PUT /api/stacks/{id}/git/redeploy`). **Polling é proibido** (decisão do proprietário, 2026-10-29):
-nem o auto-update por intervalo do Portainer nem timer/cron no host. O gatilho automático e o
-redeploy sem queda estão em análise (`stack/bk/006_*`).
+Ordem no Portainer (todas "Repository", referência `refs/heads/dev`, variáveis do `.env.example`):
+1. `rd-edge` → `ops/edge/docker-compose.edge.yml` (cria a overlay `rd-edge`);
+2. `rd-dev` → `docker-compose.dev-data.yml` (cria `rd-dev-internal`, banco, Redis…);
+3. `rd-dev-app` → `docker-compose.dev-app.yml` como stack **Swarm**, com **webhook** ligado e
+   "re-pull image"; a URL do webhook vai para o segredo `PORTAINER_WEBHOOK_DEV_APP` do repositório.
 
 Acesso administrativo (somente loopback da VPS, via túnel SSH):
 `ssh -L 8025:127.0.0.1:8025 -L 3005:127.0.0.1:3005 root@<vps>` → Mailpit `http://localhost:8025`,
 Grafana `http://localhost:3005`. Portainer: `https://<vps>:9443`.
 
-Fluxo de versões planejado (não implementado nesta ação): `dev` validado online → tag de versão
-(ex.: `vX.Y.Z-beta.N`) → `ops/release/build-images.sh` publica imagens versionadas num registro →
-instância **dev-teste** usa `ops/portainer/docker-compose.prod.yml`-like com `RD_VERSION` (imagem,
-não código) atrás da mesma borda.
+Fluxo de versões planejado (dev-teste): tag `vX.Y.Z-beta.N` → as mesmas imagens com tag de versão
+→ stacks `rd-dev-teste` / `rd-dev-teste-app` com `RD_IMAGE_TAG=<versão>` atrás da mesma borda.

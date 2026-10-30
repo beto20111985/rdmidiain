@@ -1,0 +1,386 @@
+# =============================================================================
+# RD Mídia Indoor — DEV ONLINE · STACK DA APLICAÇÃO (Docker SWARM; Portainer → Stack via Git)
+# AÇÃO 007 — redeploy SEM QUEDA
+# -----------------------------------------------------------------------------
+# Serviços sem estado próprio: nginx da instância, painel, Player Web, backend,
+# workers e os jobs de migração/bootstrap. Imagens prontas no GHCR (CI:
+# .github/workflows/dev-images.yml) — nada é compilado na VPS durante o deploy.
+#
+# Como o deploy não derruba o usuário:
+#   - o Swarm só atualiza serviços cujo spec/imagem mudou (banco e Redis estão na stack
+#     de dados, docker-compose.dev-data.yml, e não são tocados);
+#   - update_config.order=start-first: a tarefa NOVA sobe e só entra no balanceamento
+#     quando o healthcheck passa; a ANTIGA sai depois (failure_action=rollback);
+#   - backend/worker/bootstrap só ficam saudáveis depois que o job "migrate" levou o
+#     schema ao head do código da imagem (espera em "alembic current … (head)");
+#   - o Traefik (provider docker, por EVENTOS) roteia para os containers do nginx
+#     saudáveis; o middleware de retry cobre a saída do container antigo.
+# Regra obrigatória: migrations COMPATÍVEIS com a versão anterior (expandir → implantar
+# → contrair), porque as duas versões convivem por alguns segundos.
+#
+# Gatilho: webhook da stack chamado pelo CI após publicar as imagens (sem polling).
+# Variáveis: ops/portainer/dev-online.env.example. Procedimento: ops/README.md §12.
+# =============================================================================
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "20m"
+    max-file: "5"
+
+x-backend-env: &backend-env
+  ENVIRONMENT: development
+  PYTHONUNBUFFERED: "1"
+  DEBUG: "false"
+  MOCK_PAYMENT: "true"
+  OPENAPI_ENABLED: "true"
+  COOKIE_SECURE: "true"
+  LOG_JSON: "true"
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: ${RD_DB_NAME:-rdmidiaindoor}
+  POSTGRES_USER: rd_app
+  POSTGRES_PASSWORD_FILE: /run/secrets/db_app_password
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  REDIS_PASSWORD_FILE: /run/secrets/redis_password
+  SECRET_KEY_FILE: /run/secrets/app_secret_key
+  JWT_SECRET_KEY_FILE: /run/secrets/jwt_secret_key
+  DATA_ENCRYPTION_KEY_FILE: /run/secrets/data_encryption_key
+  # Provedor FALSO (MOCK_PAYMENT) também assina/valida webhooks simulados.
+  CLOUDPAYPAG_WEBHOOK_SECRET_FILE: /run/secrets/cloudpaypag_webhook_secret
+  EMAIL_BACKEND: smtp
+  SMTP_HOST: mailpit
+  SMTP_PORT: "1025"
+  SMTP_FROM: RD Mídia Indoor (DEV) <nao-responder@${RD_PANEL_DOMAIN:?defina RD_PANEL_DOMAIN}>
+  FRONTEND_URL: https://${RD_PANEL_DOMAIN}
+  PANEL_BASE_URL: https://${RD_PANEL_DOMAIN}
+  CORS_ORIGINS: https://${RD_PANEL_DOMAIN},https://${RD_PLAYER_DOMAIN:?defina RD_PLAYER_DOMAIN}
+  PLAYER_ALLOWED_ORIGINS: ${RD_PLAYER_ALLOWED_ORIGINS:?defina RD_PLAYER_ALLOWED_ORIGINS}
+  ALLOWED_HOSTS: ${RD_PANEL_DOMAIN},${RD_API_DOMAIN:?defina RD_API_DOMAIN},${RD_PLAYER_DOMAIN}
+  RD_INSTANCE_SLUG: ${RD_INSTANCE_SLUG:?defina RD_INSTANCE_SLUG}
+  MANIFEST_SIGNING_KEY_FILE: /run/secrets/manifest_signing_key
+  PLAYER_RELEASE_PUBLIC_KEYS_FILE: /run/configs/player_release_public_keys.json
+  PROMETHEUS_ENABLED: "true"
+  STORAGE_PROVIDER: local
+  STORAGE_LOCAL_PATH: /app/media
+
+x-backend-secrets: &backend-secrets
+  - db_app_password
+  - redis_password
+  - app_secret_key
+  - jwt_secret_key
+  - data_encryption_key
+  - cloudpaypag_webhook_secret
+  - manifest_signing_key
+
+x-backend-configs: &backend-configs
+  - source: player_release_public_keys
+    target: /run/configs/player_release_public_keys.json
+
+# Troca sem queda: nova tarefa saudável ANTES de a antiga sair; falhou → volta sozinho.
+x-rolling: &rolling
+  update_config:
+    parallelism: 1
+    delay: 0s
+    order: start-first
+    failure_action: rollback
+    monitor: 15s
+  rollback_config:
+    parallelism: 1
+    order: start-first
+  restart_policy:
+    condition: any
+    delay: 5s
+
+networks:
+  # Borda compartilhada da VPS (Traefik) — overlay attachable da stack rd-edge.
+  rd-edge:
+    name: ${RD_EDGE_NETWORK:-rd-edge}
+    external: true
+  # Rede interna da instância — criada pela stack de dados (postgres, redis, mailpit…).
+  internal:
+    name: ${RD_INSTANCE:?defina RD_INSTANCE}-internal
+    external: true
+  # Saída controlada para a internet (backend/worker).
+  egress:
+    driver: overlay
+
+volumes:
+  # Mesmo volume da instância (mídia enviada + chaves locais) — preservado entre deploys.
+  media-storage:
+    name: ${RD_INSTANCE}_media-storage
+
+secrets:
+  db_owner_password:
+    file: ${RD_SECRETS_DIR:?defina RD_SECRETS_DIR}/db_owner_password
+  db_app_password:
+    file: ${RD_SECRETS_DIR}/db_app_password
+  redis_password:
+    file: ${RD_SECRETS_DIR}/redis_password
+  app_secret_key:
+    file: ${RD_SECRETS_DIR}/app_secret_key
+  jwt_secret_key:
+    file: ${RD_SECRETS_DIR}/jwt_secret_key
+  data_encryption_key:
+    file: ${RD_SECRETS_DIR}/data_encryption_key
+  cloudpaypag_webhook_secret:
+    file: ${RD_SECRETS_DIR}/cloudpaypag_webhook_secret
+  manifest_signing_key:
+    file: ${RD_SECRETS_DIR}/manifest_signing_key
+  bootstrap_master_password:
+    file: ${RD_SECRETS_DIR}/bootstrap_master_password
+
+configs:
+  player_release_public_keys:
+    file: ${RD_CONFIG_DIR:?defina RD_CONFIG_DIR}/player_release_public_keys.json
+
+services:
+
+  # ─── BORDA DA INSTÂNCIA: headers, rate limit, roteamento (TLS no Traefik) ───
+  # Labels do Traefik no CONTAINER (provider docker, por eventos); só containers
+  # saudáveis recebem tráfego. SIGQUIT = desligamento gracioso do nginx.
+  nginx:
+    image: ${RD_IMAGE_PREFIX:-ghcr.io/beto20111985/rdmidiain}/nginx:${RD_IMAGE_TAG:-dev}
+    environment:
+      NGINX_ENVSUBST_TEMPLATE_DIR: /etc/nginx/templates-proxied
+      RD_PANEL_DOMAIN: ${RD_PANEL_DOMAIN}
+      RD_API_DOMAIN: ${RD_API_DOMAIN}
+      RD_PLAYER_DOMAIN: ${RD_PLAYER_DOMAIN}
+      RD_TRUSTED_PROXY_CIDR: ${RD_TRUSTED_PROXY_CIDR:-10.250.0.2/32}
+    stop_signal: SIGQUIT
+    stop_grace_period: 20s
+    networks:
+      - rd-edge
+      - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${RD_EDGE_NETWORK:-rd-edge}"
+      - "traefik.http.services.${RD_INSTANCE}.loadbalancer.server.port=80"
+      - "traefik.http.middlewares.${RD_INSTANCE}-retry.retry.attempts=3"
+      - "traefik.http.middlewares.${RD_INSTANCE}-retry.retry.initialinterval=100ms"
+      - "traefik.http.routers.${RD_INSTANCE}-panel.rule=Host(`${RD_PANEL_DOMAIN}`)"
+      - "traefik.http.routers.${RD_INSTANCE}-panel.entrypoints=websecure"
+      - "traefik.http.routers.${RD_INSTANCE}-panel.tls.certresolver=le"
+      - "traefik.http.routers.${RD_INSTANCE}-panel.service=${RD_INSTANCE}"
+      - "traefik.http.routers.${RD_INSTANCE}-panel.middlewares=${RD_INSTANCE}-retry"
+      - "traefik.http.routers.${RD_INSTANCE}-api.rule=Host(`${RD_API_DOMAIN}`)"
+      - "traefik.http.routers.${RD_INSTANCE}-api.entrypoints=websecure"
+      - "traefik.http.routers.${RD_INSTANCE}-api.tls.certresolver=le"
+      - "traefik.http.routers.${RD_INSTANCE}-api.service=${RD_INSTANCE}"
+      - "traefik.http.routers.${RD_INSTANCE}-api.middlewares=${RD_INSTANCE}-retry"
+      - "traefik.http.routers.${RD_INSTANCE}-player.rule=Host(`${RD_PLAYER_DOMAIN}`)"
+      - "traefik.http.routers.${RD_INSTANCE}-player.entrypoints=websecure"
+      - "traefik.http.routers.${RD_INSTANCE}-player.tls.certresolver=le"
+      - "traefik.http.routers.${RD_INSTANCE}-player.service=${RD_INSTANCE}"
+      - "traefik.http.routers.${RD_INSTANCE}-player.middlewares=${RD_INSTANCE}-retry"
+    healthcheck:
+      test: ["CMD-SHELL", "nginx -t -q && wget -q -O /dev/null http://127.0.0.1:8081/nginx-health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+      start_interval: 1s
+    logging: *default-logging
+    deploy:
+      <<: *rolling
+      replicas: 1
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M
+
+  frontend:
+    image: ${RD_IMAGE_PREFIX:-ghcr.io/beto20111985/rdmidiain}/frontend:${RD_IMAGE_TAG:-dev}
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+      start_interval: 1s
+    logging: *default-logging
+    deploy:
+      <<: *rolling
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+
+  player-web:
+    image: ${RD_IMAGE_PREFIX:-ghcr.io/beto20111985/rdmidiain}/player-web:${RD_IMAGE_TAG:-dev}
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+      start_interval: 1s
+    logging: *default-logging
+    deploy:
+      <<: *rolling
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+
+  # ─── Jobs: migrations → bootstrap (rodam de novo quando a imagem muda) ──────
+  migrate:
+    image: ${RD_IMAGE_PREFIX:-ghcr.io/beto20111985/rdmidiain}/backend:${RD_IMAGE_TAG:-dev}
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      <<: *backend-env
+      POSTGRES_USER: rd_owner
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_owner_password
+      MANIFEST_SIGNING_KEY_FILE: ""
+      PLAYER_RELEASE_PUBLIC_KEYS_FILE: ""
+    secrets:
+      - db_owner_password
+      - redis_password
+      - app_secret_key
+      - jwt_secret_key
+      - data_encryption_key
+      - cloudpaypag_webhook_secret
+    networks:
+      - internal
+    logging: *default-logging
+    deploy:
+      mode: replicated-job
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 6
+
+  bootstrap:
+    image: ${RD_IMAGE_PREFIX:-ghcr.io/beto20111985/rdmidiain}/backend:${RD_IMAGE_TAG:-dev}
+    # Espera o schema chegar ao head (job migrate) antes de inicializar a instância.
+    command: ["sh", "-c", "t=0; until alembic current 2>/dev/null | grep -q '(head)'; do t=$$((t+2)); [ $$t -ge 600 ] && { echo 'schema não chegou ao head em 600 s' >&2; exit 1; }; sleep 2; done; exec python -m app.cli bootstrap-instance"]
+    environment:
+      <<: *backend-env
+      MANIFEST_SIGNING_KEY_FILE: ""
+      PLAYER_RELEASE_PUBLIC_KEYS_FILE: ""
+      RD_BOOTSTRAP_DUAL_MASTER_APPROVAL: ${RD_BOOTSTRAP_DUAL_MASTER_APPROVAL:-}
+      RD_BOOTSTRAP_MASTER_EMAIL: ${RD_BOOTSTRAP_MASTER_EMAIL:-}
+      RD_BOOTSTRAP_MASTER_NAME: ${RD_BOOTSTRAP_MASTER_NAME:-}
+      RD_BOOTSTRAP_MASTER_PASSWORD_FILE: /run/secrets/bootstrap_master_password
+    secrets:
+      - db_app_password
+      - redis_password
+      - app_secret_key
+      - jwt_secret_key
+      - data_encryption_key
+      - cloudpaypag_webhook_secret
+      - bootstrap_master_password
+    networks:
+      - internal
+    logging: *default-logging
+    deploy:
+      mode: replicated-job
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 6
+
+  # ─── Aplicação ──────────────────────────────────────────────────────────────
+  # Só sobe o uvicorn depois que o schema está no head do código desta imagem:
+  # enquanto espera, a tarefa nova não fica saudável e a antiga continua atendendo.
+  backend:
+    image: ${RD_IMAGE_PREFIX:-ghcr.io/beto20111985/rdmidiain}/backend:${RD_IMAGE_TAG:-dev}
+    command: ["sh", "-c", "t=0; until alembic current 2>/dev/null | grep -q '(head)'; do t=$$((t+2)); [ $$t -ge 600 ] && { echo 'schema não chegou ao head em 600 s' >&2; exit 1; }; sleep 2; done; exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4 --log-level info"]
+    environment:
+      <<: *backend-env
+    secrets: *backend-secrets
+    configs: *backend-configs
+    volumes:
+      - media-storage:/app/media
+    stop_grace_period: 30s
+    networks:
+      - internal
+      - egress
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 600s
+      start_interval: 2s
+    logging: *default-logging
+    deploy:
+      <<: *rolling
+      replicas: 1
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+
+  worker:
+    image: ${RD_IMAGE_PREFIX:-ghcr.io/beto20111985/rdmidiain}/backend:${RD_IMAGE_TAG:-dev}
+    command: ["sh", "-c", "t=0; until alembic current 2>/dev/null | grep -q '(head)'; do t=$$((t+2)); [ $$t -ge 600 ] && { echo 'schema não chegou ao head em 600 s' >&2; exit 1; }; sleep 2; done; exec celery -A app.workers.celery_app worker --loglevel=info --concurrency=${RD_WORKER_CONCURRENCY:-2} -Q ${RD_CELERY_QUEUES:-default,media,notifications,financial,reports}"]
+    environment:
+      <<: *backend-env
+    secrets: *backend-secrets
+    configs: *backend-configs
+    volumes:
+      - media-storage:/app/media
+    stop_grace_period: 120s            # ffmpeg/tarefas longas terminam ou liberam o lease
+    networks:
+      - internal
+      - egress
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.workers.celery_app inspect ping -d celery@$$HOSTNAME --timeout 10 2>/dev/null | grep -q pong"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 600s
+      start_interval: 5s
+    logging: *default-logging
+    deploy:
+      <<: *rolling
+      replicas: 1
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+
+  # Beat: STOP-first (RedBeat usa trava no Redis: com dois beats o novo nunca publicaria
+  # heartbeat e a troca start-first travaria). Alguns segundos sem agendamento não afetam o usuário.
+  worker-beat:
+    image: ${RD_IMAGE_PREFIX:-ghcr.io/beto20111985/rdmidiain}/backend:${RD_IMAGE_TAG:-dev}
+    command: ["sh", "-c", "t=0; until alembic current 2>/dev/null | grep -q '(head)'; do t=$$((t+2)); [ $$t -ge 600 ] && { echo 'schema não chegou ao head em 600 s' >&2; exit 1; }; sleep 2; done; exec celery -A app.workers.celery_app beat --loglevel=info --scheduler redbeat.RedBeatScheduler"]
+    environment:
+      <<: *backend-env
+    secrets: *backend-secrets
+    configs: *backend-configs
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "python", "-m", "app.workers.observability", "beat-healthcheck", "--max-age", "180"]
+      interval: 60s
+      timeout: 20s
+      retries: 3
+      start_period: 600s
+      start_interval: 5s
+    logging: *default-logging
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        order: stop-first
+        failure_action: rollback
+        monitor: 15s
+      rollback_config:
+        parallelism: 1
+        order: stop-first
+      restart_policy:
+        condition: any
+        delay: 5s
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
